@@ -9,7 +9,6 @@ Docker Desktop만 설치되어 있으면 된다.
 ```bash
 git clone https://github.com/ezhye0n/31th_2_CtrlZ_odumak_back.git
 cd 31th_2_CtrlZ_odumak_back
-git switch develop
 cp .env.example .env
 docker compose up --build
 ```
@@ -80,14 +79,15 @@ docker compose exec api alembic revision --autogenerate -m "add rooms table"
 docker compose exec api alembic upgrade head
 ```
 
-같은 시점에 두 명이 마이그레이션을 만들면 head가 갈라진다. PR 올리기 전 develop을 pull 받고 `docker compose exec api alembic heads`로 head가 하나인지 확인하고,
+같은 시점에 두 명이 마이그레이션을 만들면 head가 갈라진다. PR 올리기 전 main을 pull 받고 `docker compose exec api alembic heads`로 head가 하나인지 확인하고,
 갈라졌으면 `alembic merge heads -m "merge"`로 합친다.
 
 ## 5. 브랜치 / PR
 
-- `main`: 배포용, `develop`: 통합 개발 브랜치
-- 작업 브랜치: `feat/<기능명세서번호>-<짧은설명>` (예: `feat/58-memo-create`), `fix/...`
-- develop으로 PR, 리뷰 1명 이상 승인 후 머지
+- `main` 하나만 사용. 직접 push 하지 않고 PR로만 머지
+- 작업 브랜치: `<타입>/<짧은설명>` (예: `feat/memo-create`, `fix/memo-delete`)
+  - 타입: `feat` 기능, `fix` 버그, `refactor` 리팩터링, `chore` 설정·문서
+- main으로 PR, 리뷰 1명 이상 승인 후 머지, 머지한 브랜치는 삭제
 - CI(ruff 린트·포맷 검사, 마이그레이션, pytest)가 통과해야 머지
 
 커밋 전 한 번 실행 (`docker compose up`으로 api 컨테이너가 떠 있는 상태에서):
