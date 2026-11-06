@@ -4,14 +4,20 @@ FastAPI + PostgreSQL + SQLAlchemy 2.0(async) + Alembic
 
 ## 1. 처음 세팅
 
+Docker Desktop만 설치되어 있으면 된다.
+
 ```bash
-git clone <repo-url> && cd odumak-backend
+git clone https://github.com/ezhye0n/31th_2_CtrlZ_odumak_back.git
+cd 31th_2_CtrlZ_odumak_back
+git switch develop
 cp .env.example .env
 docker compose up --build
 ```
 
 - Swagger: http://localhost:8000/docs
-- 헬스체크: http://localhost:8000/health , http://localhost:8000/health/db
+- 헬스체크: http://localhost:8000/health , http://localhost:8000/health/db (`"db": "ok"`면 세팅 완료)
+- `requirements*.txt`나 `Dockerfile`이 바뀌었을 때만 `--build`가 필요하고, 평소엔 `docker compose up`
+- 5432 또는 8000 포트가 이미 사용 중이라는 에러가 나면 로컬에 켜져 있는 PostgreSQL 등을 먼저 종료
 
 AI 기능까지 같이 띄울 때 (torch CPU 버전 포함, 이미지가 커짐):
 
@@ -67,14 +73,14 @@ router 작성 → `app/main.py`의 `api_v1`에 include 한 줄 → 마이그레�
 
 ## 4. DB 마이그레이션
 
-모델을 바꿨으면 반드시 마이그레이션 파일을 같이 커밋한다.
+모델을 바꿨으면 반드시 마이그레이션 파일을 같이 커밋한다. 생성된 파일은 ruff로 자동 정리된다(alembic.ini의 post_write_hooks).
 
 ```bash
 docker compose exec api alembic revision --autogenerate -m "add rooms table"
 docker compose exec api alembic upgrade head
 ```
 
-같은 시점에 두 명이 마이그레이션을 만들면 head가 갈라진다. PR 머지 전 `alembic heads`로 하나인지 확인하고,
+같은 시점에 두 명이 마이그레이션을 만들면 head가 갈라진다. PR 올리기 전 develop을 pull 받고 `docker compose exec api alembic heads`로 head가 하나인지 확인하고,
 갈라졌으면 `alembic merge heads -m "merge"`로 합친다.
 
 ## 5. 브랜치 / PR
@@ -84,8 +90,10 @@ docker compose exec api alembic upgrade head
 - develop으로 PR, 리뷰 1명 이상 승인 후 머지
 - CI(ruff 린트·포맷 검사, 마이그레이션, pytest)가 통과해야 머지
 
-커밋 전 로컬에서:
+커밋 전 한 번 실행 (`docker compose up`으로 api 컨테이너가 떠 있는 상태에서):
 
 ```bash
-ruff check . --fix && ruff format . && pytest -q
+docker compose exec api sh -c "ruff check . --fix && ruff format . && pytest -q"
 ```
+
+venv로 로컬 실행 중이면 `ruff check . --fix && ruff format . && pytest -q`를 그대로 실행해도 된다.
