@@ -1,0 +1,4 @@
+# AI 기능(임베딩·클러스터링)용. torch는 Dockerfile에서 CPU 전용 인덱스로 먼저 설치함
+sentence-transformers==3.3.1
+scikit-learn==1.6.0
+numpy==2.2.0

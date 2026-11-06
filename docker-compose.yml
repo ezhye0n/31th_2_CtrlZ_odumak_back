@@ -1,0 +1,38 @@
+# 로컬 개발용: docker compose up --build
+services:
+  db:
+    # 메모 임베딩을 DB에 저장할 경우를 대비해 pgvector 포함 이미지 사용 (일반 Postgres로도 동작)
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_USER: odumak
+      POSTGRES_PASSWORD: odumak
+      POSTGRES_DB: odumak
+      TZ: Asia/Seoul
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U odumak"]
+      interval: 5s
+      retries: 10
+
+  api:
+    build:
+      context: .
+      args:
+        INSTALL_ML: ${INSTALL_ML:-false}
+    env_file: .env
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./app:/app/app
+      - ./alembic:/app/alembic
+      - ./ml_models:/app/ml_models
+    command: sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
+
+volumes:
+  pgdata:
