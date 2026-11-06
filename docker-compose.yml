@@ -22,16 +22,17 @@ services:
       context: .
       args:
         INSTALL_ML: ${INSTALL_ML:-false}
+        INSTALL_DEV: "true"
     env_file: .env
     ports:
       - "8000:8000"
     depends_on:
       db:
         condition: service_healthy
+    # 프로젝트 전체를 마운트: 코드 수정 즉시 반영(--reload), 컨테이너에서 만든
+    # 마이그레이션 파일이 로컬에 생기고, 컨테이너 안에서 ruff·pytest 실행 가능
     volumes:
-      - ./app:/app/app
-      - ./alembic:/app/alembic
-      - ./ml_models:/app/ml_models
+      - .:/app
     command: sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
 
 volumes:

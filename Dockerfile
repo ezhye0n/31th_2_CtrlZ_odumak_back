@@ -9,9 +9,12 @@ WORKDIR /app
 # INSTALL_ML=true일 때만 CPU 전용 torch + sentence-transformers 설치
 # (기본 torch는 CUDA 포함이라 이미지가 수 GB로 커짐)
 ARG INSTALL_ML=false
+# 로컬 개발 컨테이너에서 ruff·pytest를 돌릴 수 있도록 dev 의존성 설치 (배포 이미지는 false)
+ARG INSTALL_DEV=false
 
-COPY requirements.txt requirements-ml.txt ./
+COPY requirements.txt requirements-dev.txt requirements-ml.txt ./
 RUN pip install -r requirements.txt && \
+    if [ "$INSTALL_DEV" = "true" ]; then pip install -r requirements-dev.txt ; fi && \
     if [ "$INSTALL_ML" = "true" ]; then \
       pip install torch --index-url https://download.pytorch.org/whl/cpu && \
       pip install -r requirements-ml.txt ; \
