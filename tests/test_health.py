@@ -8,18 +8,18 @@ async def test_health(client):
 
 
 async def test_me_requires_token(client):
-    res = await client.get("/api/v1/auth/me")
+    res = await client.get("/api/auth/me")
     assert res.status_code == 401
     assert res.json()["error"]["code"] == "UNAUTHORIZED"
 
 
 async def test_me_with_token(client):
     token = create_access_token(7)
-    res = await client.get("/api/v1/auth/me", headers={"Authorization": f"Bearer {token}"})
+    res = await client.get("/api/auth/me", headers={"Authorization": f"Bearer {token}"})
     assert res.json()["data"]["user_id"] == 7
 
 
 async def test_refresh_token_rejected_as_access(client):
     token = create_refresh_token(7)
-    res = await client.get("/api/v1/auth/me", headers={"Authorization": f"Bearer {token}"})
+    res = await client.get("/api/auth/me", headers={"Authorization": f"Bearer {token}"})
     assert res.status_code == 401
