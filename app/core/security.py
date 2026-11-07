@@ -20,15 +20,15 @@ def _create_token(sub: str, token_type: str, expires: timedelta) -> str:
     return jwt.encode(payload, settings.JWT_SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
 
 
-def create_access_token(user_id: int) -> str:
+def create_access_token(member_id: int) -> str:
     return _create_token(
-        str(user_id), "access", timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+        str(member_id), "access", timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     )
 
 
-def create_refresh_token(user_id: int) -> str:
+def create_refresh_token(member_id: int) -> str:
     return _create_token(
-        str(user_id), "refresh", timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
+        str(member_id), "refresh", timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
     )
 
 

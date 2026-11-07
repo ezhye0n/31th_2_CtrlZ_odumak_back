@@ -2,6 +2,7 @@ import asyncio
 from logging.config import fileConfig
 
 from alembic import context
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import create_async_engine
 
 from app.core.config import settings
@@ -26,6 +27,9 @@ def run_migrations_offline() -> None:
 
 
 def do_run_migrations(connection) -> None:
+    # 메모 임베딩(vector 타입)용 확장. pgvector 이미지에 포함되어 있어 활성화만 하면 됨
+    connection.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
+    connection.commit()  # 열린 트랜잭션을 닫아야 아래 마이그레이션이 커밋됨
     context.configure(connection=connection, target_metadata=target_metadata, compare_type=True)
     with context.begin_transaction():
         context.run_migrations()

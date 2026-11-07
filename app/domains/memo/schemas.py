@@ -42,13 +42,14 @@ class MemoItem(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
-    memo_id: int = Field(validation_alias="id")
-    user_id: int
+    memo_id: int
+    member_id: int
     chapter: int
     page: int | None
     total_pages: int | None
     quote: str | None
     content: str
     is_spoiler: bool
+    is_hidden: bool
     cluster_id: int | None
     created_at: datetime
