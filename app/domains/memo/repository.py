@@ -1,3 +1,5 @@
+from typing import Literal
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -13,9 +15,27 @@ class MemoRepository:
     async def get(self, memo_id: int) -> Memo | None:
         return await self.db.get(Memo, memo_id)
 
-    async def list_by_room(self, room_id: int) -> list[Memo]:
-        stmt = select(Memo).where(Memo.room_id == room_id).order_by(Memo.created_at.desc())
-        return list((await self.db.scalars(stmt)).all())
+    async def list_by_room(
+        self,
+        room_id: int,
+        sort: Literal["latest", "oldest"],
+        chapter: int | None,
+        cursor: int | None,
+        limit: int,
+    ) -> list[Memo]:
+        """id 기준 커서 페이지네이션. id는 작성 순서대로 증가하므로 정렬 기준으로 사용."""
+        stmt = select(Memo).where(Memo.room_id == room_id)
+        if chapter is not None:
+            stmt = stmt.where(Memo.chapter == chapter)
+        if sort == "latest":
+            if cursor is not None:
+                stmt = stmt.where(Memo.id < cursor)
+            stmt = stmt.order_by(Memo.id.desc())
+        else:
+            if cursor is not None:
+                stmt = stmt.where(Memo.id > cursor)
+            stmt = stmt.order_by(Memo.id.asc())
+        return list((await self.db.scalars(stmt.limit(limit))).all())
 
     def add(self, memo: Memo) -> None:
         self.db.add(memo)
