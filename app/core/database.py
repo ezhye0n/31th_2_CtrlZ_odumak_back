@@ -15,10 +15,15 @@ class Base(DeclarativeBase):
     pass
 
 
-class TimestampMixin:
-    """모든 테이블 공통 생성·수정 시각."""
+class CreatedAtMixin:
+    """생성 시각만 있는 테이블용."""
 
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class TimestampMixin(CreatedAtMixin):
+    """생성·수정 시각이 둘 다 있는 테이블용."""
+
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
