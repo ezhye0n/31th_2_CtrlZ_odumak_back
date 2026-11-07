@@ -16,7 +16,7 @@ async def test_me_requires_token(client):
 async def test_me_with_token(client):
     token = create_access_token(7)
     res = await client.get("/api/auth/me", headers={"Authorization": f"Bearer {token}"})
-    assert res.json()["data"]["user_id"] == 7
+    assert res.json()["data"]["member_id"] == 7
 
 
 async def test_refresh_token_rejected_as_access(client):
