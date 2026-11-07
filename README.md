@@ -70,7 +70,7 @@ router 작성 → `app/main.py`의 `api`에 include 한 줄 → 마이그레이�
   - `raise NotFound("MEMO_NOT_FOUND", "요청한 메모를 찾을 수 없습니다.")`
   - `raise Forbidden("SELF_ONLY", "...")`, `BadRequest(...)` 또는 `AppException(status, code, message)`
 - 요청 형식 오류(필수값 누락, 타입·길이 위반)는 자동으로 400 `INVALID_INPUT`
-- 인증 필요 API: `user_id: int = Depends(get_current_user_id)`
+- 인증 필요 API: `member_id: int = Depends(get_current_member_id)`
 - URI prefix: `/api` (명세서 URI 그대로)
 - ID는 모두 숫자(Number)
 

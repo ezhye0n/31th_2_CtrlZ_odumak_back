@@ -8,10 +8,10 @@ from app.core.security import decode_token
 bearer = HTTPBearer(auto_error=False)
 
 
-async def get_current_user_id(
+async def get_current_member_id(
     cred: HTTPAuthorizationCredentials | None = Depends(bearer),
 ) -> int:
-    """Auth=필요 API에서 Depends(get_current_user_id)로 사용."""
+    """Auth=필요 API에서 Depends(get_current_member_id)로 사용."""
     if cred is None:
         raise Unauthorized()
     try:

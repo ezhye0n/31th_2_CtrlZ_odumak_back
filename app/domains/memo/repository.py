@@ -23,18 +23,18 @@ class MemoRepository:
         cursor: int | None,
         limit: int,
     ) -> list[Memo]:
-        """id 기준 커서 페이지네이션. id는 작성 순서대로 증가하므로 정렬 기준으로 사용."""
-        stmt = select(Memo).where(Memo.room_id == room_id)
+        """memo_id 기준 커서 페이지네이션. memo_id는 작성 순서대로 증가하므로 정렬 기준으로 사용."""
+        stmt = select(Memo).where(Memo.bookroom_id == room_id)
         if chapter is not None:
             stmt = stmt.where(Memo.chapter == chapter)
         if sort == "latest":
             if cursor is not None:
-                stmt = stmt.where(Memo.id < cursor)
-            stmt = stmt.order_by(Memo.id.desc())
+                stmt = stmt.where(Memo.memo_id < cursor)
+            stmt = stmt.order_by(Memo.memo_id.desc())
         else:
             if cursor is not None:
-                stmt = stmt.where(Memo.id > cursor)
-            stmt = stmt.order_by(Memo.id.asc())
+                stmt = stmt.where(Memo.memo_id > cursor)
+            stmt = stmt.order_by(Memo.memo_id.asc())
         return list((await self.db.scalars(stmt.limit(limit))).all())
 
     def add(self, memo: Memo) -> None:
