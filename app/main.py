@@ -52,8 +52,8 @@ async def health_db():
     return ok({"db": "ok"})
 
 
-api_v1 = APIRouter(prefix="/api/v1")
-api_v1.include_router(auth_router)
-api_v1.include_router(memo_router)
+api = APIRouter(prefix="/api")
+api.include_router(auth_router)
+api.include_router(memo_router)
 # 담당 도메인 라우터는 여기 한 줄씩 추가 (room, community, notification ...)
-app.include_router(api_v1)
+app.include_router(api)

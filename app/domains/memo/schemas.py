@@ -1,37 +1,50 @@
 from datetime import datetime
+from typing import Annotated
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, StringConstraints, model_validator
+
+# 빈 본문(공백만 있는 경우 포함) 방지, 최대 500자
+Content = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=500)]
+Quote = Annotated[str, StringConstraints(strip_whitespace=True, max_length=500)]
 
 
 class MemoCreate(BaseModel):
-    room_id: int
-    chapter: int | None = None
+    chapter: int = Field(ge=1)
+    quote: Quote | None = None
+    content: Content
     page: int | None = Field(default=None, ge=1)
     total_pages: int | None = Field(default=None, ge=1)
-    quote: str | None = Field(default=None, max_length=500)
-    content: str = Field(min_length=1, max_length=2000)
     is_spoiler: bool = False
 
     @model_validator(mode="after")
     def check_page(self):
-        if self.page and self.total_pages and self.page > self.total_pages:
-            raise ValueError("page는 total_pages보다 클 수 없습니다.")
+        if (self.page is None) != (self.total_pages is None):
+            raise ValueError("page와 total_pages는 함께 전달해야 합니다.")
+        if self.page is not None and self.page > self.total_pages:
+            raise ValueError("page는 total_pages 이하여야 합니다.")
         return self
 
 
 class MemoUpdate(BaseModel):
-    quote: str | None = Field(default=None, max_length=500)
-    content: str | None = Field(default=None, min_length=1, max_length=2000)
+    content: Content | None = None
     is_spoiler: bool | None = None
 
+    @model_validator(mode="after")
+    def check_not_empty(self):
+        values = self.model_dump(exclude_unset=True)
+        if not values or any(v is None for v in values.values()):
+            raise ValueError("content 또는 is_spoiler 중 하나 이상을 전달해야 합니다.")
+        return self
 
-class MemoResponse(BaseModel):
+
+class MemoItem(BaseModel):
+    """목록·클러스터 열람에서 쓰는 메모 한 건."""
+
     model_config = ConfigDict(from_attributes=True)
 
-    id: int
+    memo_id: int = Field(validation_alias="id")
     user_id: int
-    room_id: int
-    chapter: int | None
+    chapter: int
     page: int | None
     total_pages: int | None
     quote: str | None
