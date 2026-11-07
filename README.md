@@ -42,8 +42,13 @@ app/
   core/        config, DB 세션, JWT·비밀번호
   common/      공통 응답 포맷, 예외, 인증 의존성
   domains/     기능 영역별 폴더 (router / schemas / models / service / repository)
-    auth/      온보딩·인증
-    memo/      메모·클러스터링 (도메인 작성 예시로 참고)
+    auth/          회원·이메일 인증 (member, email_verification)
+    book/          책 (booklist)
+    room/          독서방·참여자 (bookroom, bookroom_member)
+    memo/          메모·클러스터·열람기록·첨부 (도메인 작성 예시로 참고)
+    comment/       댓글 (comment)
+    report/        신고·이의제기 (report, appeal)
+    notification/  알림 (notification)
   ml/          임베딩 모델 로더 (서버 기동 시 1회 로드)
   models.py    Alembic이 인식할 모델 import 모음
 alembic/       마이그레이션
