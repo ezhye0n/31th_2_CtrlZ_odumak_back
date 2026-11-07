@@ -52,7 +52,7 @@ tests/
 ```
 
 새 도메인 추가 순서: `domains/<이름>/` 폴더 생성 → models.py 작성 → `app/models.py`에 import 한 줄 →
-router 작성 → `app/main.py`의 `api_v1`에 include 한 줄 → 마이그레이션 생성.
+router 작성 → `app/main.py`의 `api`에 include 한 줄 → 마이그레이션 생성.
 
 계층 규칙: router는 요청·응답 변환만, service는 비즈니스 규칙과 commit, repository는 쿼리만.
 
@@ -66,9 +66,13 @@ router 작성 → `app/main.py`의 `api_v1`에 include 한 줄 → 마이그레�
 ```
 
 - 성공: `return ok(data)`
-- 실패: `raise NotFound(...)`, `Forbidden(...)` 또는 `AppException(status, code, message)`
+- 실패: 명세서 Error Response의 코드·메시지 그대로 예외로 던짐
+  - `raise NotFound("MEMO_NOT_FOUND", "요청한 메모를 찾을 수 없습니다.")`
+  - `raise Forbidden("SELF_ONLY", "...")`, `BadRequest(...)` 또는 `AppException(status, code, message)`
+- 요청 형식 오류(필수값 누락, 타입·길이 위반)는 자동으로 400 `INVALID_INPUT`
 - 인증 필요 API: `user_id: int = Depends(get_current_user_id)`
-- URI prefix: `/api/v1`
+- URI prefix: `/api` (명세서 URI 그대로)
+- ID는 모두 숫자(Number)
 
 ## 4. DB 마이그레이션
 
