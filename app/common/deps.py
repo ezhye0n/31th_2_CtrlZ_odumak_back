@@ -17,7 +17,7 @@ async def get_current_user_id(
     try:
         payload = decode_token(cred.credentials)
     except PyJWTError as e:
-        raise Unauthorized("유효하지 않거나 만료된 토큰입니다.") from e
+        raise Unauthorized() from e
     if payload.get("type") != "access":
-        raise Unauthorized("access 토큰이 아닙니다.")
+        raise Unauthorized()
     return int(payload["sub"])
