@@ -10,8 +10,13 @@ class Report(Base, CreatedAtMixin):
     __tablename__ = "report"
 
     report_id: Mapped[int] = mapped_column(primary_key=True)
-    reporter_id: Mapped[int] = mapped_column(ForeignKey("member.member_id"), index=True)
-    target_member_id: Mapped[int] = mapped_column(ForeignKey("member.member_id"), index=True)
+    # 회원 탈퇴(실제 삭제) 후에도 신고 기록은 남기도록 null 처리
+    reporter_id: Mapped[int | None] = mapped_column(
+        ForeignKey("member.member_id", ondelete="SET NULL"), index=True
+    )
+    target_member_id: Mapped[int | None] = mapped_column(
+        ForeignKey("member.member_id", ondelete="SET NULL"), index=True
+    )
     target_id: Mapped[int] = mapped_column(Integer)  # memo_id 또는 comment_id
     target_type: Mapped[str] = mapped_column(String(20))
     reason: Mapped[str] = mapped_column(Text)

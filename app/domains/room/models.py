@@ -12,7 +12,9 @@ class Bookroom(Base, CreatedAtMixin):
     __tablename__ = "bookroom"
 
     bookroom_id: Mapped[int] = mapped_column(primary_key=True)
-    owner_id: Mapped[int] = mapped_column(ForeignKey("member.member_id"), index=True)
+    owner_id: Mapped[int | None] = mapped_column(  # 방장 탈퇴 시 null (활성 방은 위임 후 탈퇴)
+        ForeignKey("member.member_id", ondelete="SET NULL"), index=True
+    )
     link: Mapped[str | None] = mapped_column(String(50))
     max_capacity: Mapped[int] = mapped_column(Integer)
     book_id: Mapped[int] = mapped_column(ForeignKey("booklist.book_id"), index=True)  # 읽는 중인 책

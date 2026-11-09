@@ -20,3 +20,4 @@ class Booklist(Base):
     )
     reject_reason: Mapped[str | None] = mapped_column(Text)
     chapters: Mapped[str | None] = mapped_column(Text)
+    cover_image_url: Mapped[str | None] = mapped_column(String(500))  # 표지 이미지 (선택)
