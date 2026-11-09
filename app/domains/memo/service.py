@@ -34,6 +34,8 @@ class MemoService:
     async def create(self, member_id: int, room_id: int, body: MemoCreate) -> Memo:
         await self._check_room_member(member_id, room_id)
         memo = Memo(member_id=member_id, bookroom_id=room_id, **body.model_dump())
+        if body.page is not None and body.total_pages is not None:
+            memo.progress_rate = body.page / body.total_pages
         # TODO(60): 내 진행 챕터보다 앞선 챕터면 is_spoiler=True (독서방 참여 정보 확정 후)
         self.repo.add(memo)
         await self.db.commit()

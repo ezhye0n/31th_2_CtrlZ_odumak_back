@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from pgvector.sqlalchemy import Vector
-from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text, func
+from sqlalchemy import Boolean, DateTime, Float, ForeignKey, Integer, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.database import Base, CreatedAtMixin, TimestampMixin
@@ -36,6 +36,7 @@ class Memo(Base, TimestampMixin):
     chapter: Mapped[int] = mapped_column(Integer)
     page: Mapped[int | None] = mapped_column(Integer)
     total_pages: Mapped[int | None] = mapped_column(Integer)
+    progress_rate: Mapped[float | None] = mapped_column(Float)  # page / total_pages, 없으면 null
     quote: Mapped[str | None] = mapped_column(String(500))
     content: Mapped[str] = mapped_column(Text)
     is_spoiler: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
