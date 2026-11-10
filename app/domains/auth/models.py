@@ -37,4 +37,3 @@ class EmailVerification(Base, CreatedAtMixin):
     code_hash: Mapped[str] = mapped_column(String(255))
     attempt_count: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
     expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
-
