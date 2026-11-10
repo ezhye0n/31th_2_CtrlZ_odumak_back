@@ -49,6 +49,7 @@ app/
     comment/       댓글 (comment)
     report/        신고·이의제기 (report, appeal)
     notification/  알림 (notification)
+    record/        독서 기록 (bookrecord, bookrecord_trace)
   ml/          임베딩 모델 로더 (서버 기동 시 1회 로드)
   models.py    Alembic이 인식할 모델 import 모음
 alembic/       마이그레이션

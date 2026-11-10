@@ -12,7 +12,7 @@ class Booklist(Base):
     book_id: Mapped[int] = mapped_column(primary_key=True)
     title: Mapped[str] = mapped_column(String(255))
     writer: Mapped[str] = mapped_column(String(100))
-    ISBN: Mapped[str] = mapped_column(String(50))
+    ISBN: Mapped[str | None] = mapped_column(String(50))  # 수동 등록 시 없을 수 있음
     status: Mapped[str] = mapped_column(String(20))
     request_count: Mapped[int | None] = mapped_column(Integer)
     requester_id: Mapped[int | None] = mapped_column(
@@ -20,3 +20,4 @@ class Booklist(Base):
     )
     reject_reason: Mapped[str | None] = mapped_column(Text)
     chapters: Mapped[str | None] = mapped_column(Text)
+    cover_image_url: Mapped[str | None] = mapped_column(String(500))  # 표지 이미지 (선택)
