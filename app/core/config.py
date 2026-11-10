@@ -19,6 +19,16 @@ class Settings(BaseSettings):
 
     CORS_ORIGINS: list[str] = ["http://localhost:3000"]
 
+    # 구글 로그인: identity token의 aud와 비교
+    GOOGLE_CLIENT_ID: str = ""
+
+    # 메일 발송 (HTTP 메일 API). 비어 있으면 발송 대신 서버 로그에 출력
+    MAIL_API_URL: str = ""
+    MAIL_API_KEY: str = ""
+    MAIL_FROM: str = ""
+    # 비밀번호 재설정 메일에 넣을 FE 페이지 주소 (?token=... 이 붙음)
+    PASSWORD_RESET_URL: str = ""
+
     ENABLE_EMBEDDING: bool = False
     EMBEDDING_MODEL_PATH: str = "jhgan/ko-sroberta-multitask"
 
