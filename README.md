@@ -42,7 +42,7 @@ app/
   core/        config, DB 세션, JWT·비밀번호
   common/      공통 응답 포맷, 예외, 인증 의존성
   domains/     기능 영역별 폴더 (router / schemas / models / service / repository)
-    auth/          회원·이메일 인증·권한 (member, email_verification, authority)
+    auth/          회원·이메일 인증 (member, email_verification)
     book/          책 (booklist)
     room/          독서방·참여자 (bookroom, bookroom_member)
     memo/          메모·클러스터·열람기록·첨부 (도메인 작성 예시로 참고)

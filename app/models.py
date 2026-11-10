@@ -2,7 +2,7 @@
 새 도메인 모델을 만들면 반드시 한 줄 추가할 것."""
 
 from app.core.database import Base  # noqa: F401
-from app.domains.auth.models import Authority, EmailVerification, Member  # noqa: F401
+from app.domains.auth.models import EmailVerification, Member  # noqa: F401
 from app.domains.book.models import Booklist  # noqa: F401
 from app.domains.comment.models import Comment  # noqa: F401
 from app.domains.memo.models import Attachment, Cluster, Memo, MemoReveal  # noqa: F401

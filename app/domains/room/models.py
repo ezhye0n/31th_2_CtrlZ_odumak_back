@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text
+from sqlalchemy import Boolean, DateTime, Float, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.database import Base, CreatedAtMixin
@@ -21,7 +21,8 @@ class Bookroom(Base, CreatedAtMixin):
     title: Mapped[str] = mapped_column(String(100))
     status: Mapped[str] = mapped_column(String(20))
     password: Mapped[str | None] = mapped_column(String(255))
-    due_date: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    start_date: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    end_date: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     link_expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     description: Mapped[str | None] = mapped_column(Text)
     rule: Mapped[str | None] = mapped_column(Text)
@@ -41,6 +42,10 @@ class BookroomMember(Base):
     )
     current_chapter: Mapped[int] = mapped_column(  # 진행 챕터, 스포일러 판정(60)에 사용
         Integer, default=0, server_default="0"
+    )
+    page: Mapped[int | None] = mapped_column(Integer)  # 현재 페이지 (선택)
+    progress_rate: Mapped[float] = mapped_column(  # 진행률(%)
+        Float, default=0, server_default="0"
     )
     joined_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     offer_expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))

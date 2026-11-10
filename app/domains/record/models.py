@@ -27,5 +27,8 @@ class BookrecordTrace(Base, CreatedAtMixin):
     record_id: Mapped[int] = mapped_column(
         ForeignKey("bookrecord.record_id", ondelete="CASCADE"), index=True
     )
-    memo: Mapped[str] = mapped_column(Text)
+    member_id: Mapped[int] = mapped_column(  # 흔적을 남긴 참여자
+        ForeignKey("member.member_id", ondelete="CASCADE"), index=True
+    )
+    content: Mapped[str] = mapped_column(Text)
     image_url: Mapped[str] = mapped_column(String(500))
