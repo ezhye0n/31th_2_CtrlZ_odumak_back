@@ -1,0 +1,34 @@
+# 개발 서버(dev) 배포용: docker compose -f docker-compose.dev.yml up -d --build
+# 로컬용 docker-compose.yml과 달리 코드 마운트·--reload 없이 이미지로 실행하고, DB 포트는 외부에 열지 않는다.
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-odumak}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD를 .env에 설정하세요}
+      POSTGRES_DB: ${POSTGRES_DB:-odumak}
+      TZ: Asia/Seoul
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-odumak}"]
+      interval: 5s
+      retries: 10
+
+  api:
+    build:
+      context: .
+      args:
+        INSTALL_ML: ${INSTALL_ML:-false}
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - "${API_PORT:-8000}:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    # Dockerfile CMD: alembic upgrade head 후 uvicorn 실행 (기동 시 마이그레이션 자동 반영)
+
+volumes:
+  pgdata:
