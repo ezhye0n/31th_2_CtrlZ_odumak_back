@@ -32,6 +32,11 @@ class NotFound(AppException):
         super().__init__(404, code, message)
 
 
+class Conflict(AppException):
+    def __init__(self, code: str = "CONFLICT", message: str = "이미 존재하는 리소스입니다."):
+        super().__init__(409, code, message)
+
+
 def _error_body(code: str, message: str) -> dict:
     return {"success": False, "data": None, "error": {"code": code, "message": message}}
 
