@@ -1,0 +1,44 @@
+name: Deploy dev
+
+# main에 머지되어 CI가 통과하면 개발 서버에 자동 배포. Actions 탭에서 수동 실행도 가능.
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-dev
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    # CI 성공 시(또는 수동 실행) + 저장소 변수 DEV_DEPLOY_ENABLED=true일 때만 실행
+    if: >-
+      vars.DEV_DEPLOY_ENABLED == 'true' &&
+      (github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success')
+    runs-on: ubuntu-latest
+    environment: dev
+    steps:
+      - name: SSH로 서버 접속 후 배포
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.DEV_HOST }}
+          username: ${{ secrets.DEV_USER }}
+          key: ${{ secrets.DEV_SSH_KEY }}
+          port: ${{ secrets.DEV_SSH_PORT || 22 }}
+          script_stop: true
+          script: |
+            cd ${{ secrets.DEV_APP_DIR || '~/odumak_back' }}
+            git fetch origin main
+            git reset --hard origin/main
+            docker compose -f docker-compose.dev.yml up -d --build
+            docker image prune -f
+            PORT=$(grep -E '^API_PORT=' .env | cut -d= -f2)
+            for i in $(seq 1 30); do
+              curl -fsS "http://localhost:${PORT:-8000}/health/db" && exit 0
+              sleep 2
+            done
+            docker compose -f docker-compose.dev.yml logs --tail 100 api
+            exit 1
