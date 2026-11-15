@@ -67,7 +67,7 @@ class MemoService:
         await self.db.commit()
 
 
-"""스포일러 판정, 블러 체크, 영구 열람 처리, AI 요약 블러 연동"""
+
 class SpoilerService:
     def __init__(self, db: AsyncSession):
         self.db = db
