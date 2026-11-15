@@ -36,8 +36,9 @@ jobs:
             docker compose -f docker-compose.dev.yml up -d --build
             docker image prune -f
             PORT=$(grep -E '^API_PORT=' .env | cut -d= -f2)
+            # API가 마이그레이션 후 뜰 때까지 최대 60초 재시도 (실패해도 스크립트가 멈추지 않게 if로 감쌈)
             for i in $(seq 1 30); do
-              curl -fsS "http://localhost:${PORT:-8000}/health/db" && exit 0
+              if curl -fsS "http://localhost:${PORT:-8000}/health/db"; then exit 0; fi
               sleep 2
             done
             docker compose -f docker-compose.dev.yml logs --tail 100 api
