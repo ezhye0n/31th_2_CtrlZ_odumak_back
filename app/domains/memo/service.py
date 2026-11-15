@@ -67,7 +67,6 @@ class MemoService:
         await self.db.commit()
 
 
-
 class SpoilerService:
     def __init__(self, db: AsyncSession):
         self.db = db
