@@ -84,20 +84,27 @@ class SpoilerService:
         if memo is None:
             raise NotFound("MEMO_NOT_FOUND", "요청한 메모를 찾을 수 없습니다.")
 
+        # 본인이 작성한 메모는 블러처리 X
+        if memo.member_id == member_id:
+            return False
+
         if await self.repo.is_memo_revealed(memo_id, member_id):
             return False
 
-        if memo.is_spoiler:
-            return True
-
+        # 챕터 진행도를 우선 확인하여 이미 지난 챕터면 공개(False)
         current_chapter = await self.repo.get_member_chapter(memo.bookroom_id, member_id)
-        return self.is_chapter_spoiler(memo.chapter, current_chapter)
+        if not self.is_chapter_spoiler(memo.chapter, current_chapter):
+            return False
+
+        return True
 
     async def reveal_memo(self, member_id: int, memo_id: int) -> None:
         # 1회 열람 시 영구 해제
         memo = await self.repo.get_memo(memo_id)
         if memo is None:
             raise NotFound("MEMO_NOT_FOUND", "요청한 메모를 찾을 수 없습니다.")
+
+        # TODO: 독서방 멤버 권한 검증(MemoService._check_room_member) 연동 필요 (memo.bookroom_id, member_id)
 
         await self.repo.save_memo_reveal(memo_id, member_id)
         await self.db.commit()
@@ -106,7 +113,7 @@ class SpoilerService:
         # AI요약 스포일러 연동
         cluster = await self.repo.get_cluster(cluster_id)
         if cluster is None:
-            return False
+            return True
 
         current_chapter = await self.repo.get_member_chapter(cluster.bookroom_id, member_id)
         return self.is_chapter_spoiler(cluster.chapter, current_chapter)

@@ -1,6 +1,7 @@
 from typing import Literal
 
 from sqlalchemy import select
+from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.domains.memo.models import Cluster, Memo, MemoReveal
@@ -74,6 +75,6 @@ class SpoilerRepository:
         return (await self.db.scalar(stmt)) is not None
 
     async def save_memo_reveal(self, memo_id: int, member_id: int) -> None:
-        """열람 기록이 없을 때만 영구 저장 (중복 호출 안전)"""
-        if not await self.is_memo_revealed(memo_id, member_id):
-            self.db.add(MemoReveal(memo_id=memo_id, member_id=member_id))
+        """열람 기록이 없을 때만 영구 저장 (동시 요청 안전)"""
+        stmt = insert(MemoReveal).values(memo_id=memo_id, member_id=member_id)
+        await self.db.execute(stmt.on_conflict_do_nothing())
