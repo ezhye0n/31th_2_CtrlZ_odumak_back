@@ -68,3 +68,11 @@ class RoomClosePreviewResponse(BaseModel):
 
 class RoomOwnerDelegateRequest(BaseModel):
     target_member_id: int
+
+
+class MemberStatusUpdateRequest(BaseModel):
+    status: Literal["reading", "paused", "completed"]
+
+
+class MemberStatusUpdateResponse(BaseModel):
+    next_step: str | None = None

@@ -7,6 +7,7 @@ from app.common.exceptions import AppException, BadRequest, Forbidden, NotFound
 from app.domains.room.models import Bookroom, BookroomMember
 from app.domains.room.repository import RoomRepository
 from app.domains.room.schemas import (
+    MemberStatusUpdateResponse,
     RoomClosePreviewResponse,
     RoomHomeInfo,
     RoomHomeResponse,
@@ -204,3 +205,23 @@ class RoomService:
 
         room.owner_id = target_member_id
         await self.db.commit()
+
+    async def update_member_status(
+        self,
+        member_id: int,
+        room_id: int,
+        status: Literal["reading", "paused", "completed"],
+    ) -> MemberStatusUpdateResponse:
+        room = await self.repo.get(room_id)
+        if room is None:
+            raise NotFound("ROOM_NOT_FOUND", "요청한 독서방을 찾을 수 없습니다.")
+
+        room_member = await self.repo.get_member(room_id, member_id)
+        if room_member is None:
+            raise NotFound("ROOM_NOT_FOUND", "요청한 독서방을 찾을 수 없습니다.")
+
+        room_member.status = status
+        await self.db.commit()
+
+        next_step = "S-26" if status == "completed" else None
+        return MemberStatusUpdateResponse(next_step=next_step)

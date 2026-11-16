@@ -8,6 +8,7 @@ from app.domains.room.schemas import (
     MemberCompleteRequest,
     MemberKickRequest,
     MemberProgressUpdateRequest,
+    MemberStatusUpdateRequest,
     RoomClosePreviewRequest,
     RoomOwnerDelegateRequest,
     RoomUpdateRequest,
@@ -151,3 +152,16 @@ async def delegate_room_owner(
         target_member_id=body.target_member_id,
     )
     return ok(None)
+
+
+@router.patch("/{room_id}/members/me/status")
+async def update_my_status(
+    room_id: int,
+    body: MemberStatusUpdateRequest,
+    member_id: int = Depends(get_current_member_id),
+    db: AsyncSession = Depends(get_db),
+):
+    data = await RoomService(db).update_member_status(
+        member_id=member_id, room_id=room_id, status=body.status
+    )
+    return ok(data)
