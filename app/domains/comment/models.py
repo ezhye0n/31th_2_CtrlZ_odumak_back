@@ -1,4 +1,4 @@
-from sqlalchemy import ForeignKey, Text
+from sqlalchemy import Boolean, ForeignKey, Index, Text, text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.database import Base, CreatedAtMixin
@@ -8,6 +8,15 @@ class Comment(Base, CreatedAtMixin):
     """메모 댓글·대댓글 (ERD comment)."""
 
     __tablename__ = "comment"
+    __table_args__ = (
+        Index(
+            "uq_comment_memo_member",
+            "memo_id",
+            "member_id",
+            unique=True,
+            postgresql_where=text("parent_id IS NULL AND is_deleted = false"),
+        ),
+    )
 
     comment_id: Mapped[int] = mapped_column(primary_key=True)
     member_id: Mapped[int] = mapped_column(
@@ -18,3 +27,6 @@ class Comment(Base, CreatedAtMixin):
         ForeignKey("comment.comment_id", ondelete="CASCADE")
     )
     comment: Mapped[str] = mapped_column(Text)
+    is_deleted: Mapped[bool] = mapped_column(
+        Boolean, default=False, server_default=text("false"), nullable=False
+    )

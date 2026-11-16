@@ -92,7 +92,11 @@ docker compose exec api alembic upgrade head
 같은 시점에 두 명이 마이그레이션을 만들면 head가 갈라진다. PR 올리기 전 main을 pull 받고 `docker compose exec api alembic heads`로 head가 하나인지 확인하고,
 갈라졌으면 `alembic merge heads -m "merge"`로 합친다.
 
-## 5. 브랜치 / PR
+## 5. 개발 서버 배포
+
+`docker-compose.dev.yml` + GitHub Actions(`Deploy dev`)로 배포한다. 서버 세팅·Secrets 설정은 [docs/DEPLOY.md](docs/DEPLOY.md) 참고.
+
+## 6. 브랜치 / PR
 
 - `main` 하나만 사용. 직접 push 하지 않고 PR로만 머지
 - 작업 브랜치: `<타입>/<짧은설명>` (예: `feat/memo-create`, `fix/memo-delete`)
