@@ -45,7 +45,7 @@ async def create_memo(
     member_id: int = Depends(get_current_member_id),
     service: MemoService = Depends(get_service),
 ):
-    """59. 메모 작성 (60 스포일러 자동판정, 61 클러스터 매칭 포함)"""
+    """59. 메모 작성 (60 스포일러 자동판정, 61 클러스터 매칭(임시) 포함)"""
     memo = await service.create(member_id, room_id, body)
     return ok(
         {"memo_id": memo.memo_id, "cluster_id": memo.cluster_id, "is_spoiler": memo.is_spoiler}
