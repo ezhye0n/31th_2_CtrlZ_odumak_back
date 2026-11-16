@@ -11,6 +11,7 @@ from app.core.config import settings
 from app.core.database import engine
 from app.domains.auth.router import router as auth_router
 from app.domains.auth.router import users_router
+from app.domains.comment.router import router as comment_router
 from app.domains.memo.router import router as memo_router
 from app.domains.room.router import router as room_router
 from app.ml import embedder
@@ -58,6 +59,7 @@ api = APIRouter(prefix="/api")
 api.include_router(auth_router)
 api.include_router(users_router)
 api.include_router(memo_router)
+api.include_router(comment_router)
 # 담당 도메인 라우터는 여기 한 줄씩 추가 (room, community, notification ...)
 app.include_router(api)
 api.include_router(room_router)
