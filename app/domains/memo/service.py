@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.common.exceptions import Forbidden, NotFound
 from app.domains.memo.models import Memo
-from app.domains.memo.repository import MemoRepository
+from app.domains.memo.repository import MemoRepository, SpoilerRepository
 from app.domains.memo.schemas import MemoCreate, MemoUpdate
 
 
@@ -65,3 +65,55 @@ class MemoService:
         await self.repo.delete(memo)
         # TODO(63): 클러스터에 남은 메모가 없으면 클러스터 삭제
         await self.db.commit()
+
+
+class SpoilerService:
+    def __init__(self, db: AsyncSession):
+        self.db = db
+        self.repo = SpoilerRepository(db)
+
+    def is_chapter_spoiler(self, target_chapter: int, current_chapter: int | None) -> bool:
+        # 내 진행 챕터보다 앞선 챕터면 스포일러(True)
+        if current_chapter is None:
+            return True
+        return target_chapter > current_chapter
+
+    async def check_reveal(self, member_id: int, memo_id: int) -> bool:
+        # 블러 처리 및 경고 열람
+        memo = await self.repo.get_memo(memo_id)
+        if memo is None:
+            raise NotFound("MEMO_NOT_FOUND", "요청한 메모를 찾을 수 없습니다.")
+
+        # 본인이 작성한 메모는 블러처리 X
+        if memo.member_id == member_id:
+            return False
+
+        if await self.repo.is_memo_revealed(memo_id, member_id):
+            return False
+
+        # 챕터 진행도를 우선 확인하여 이미 지난 챕터면 공개(False)
+        current_chapter = await self.repo.get_member_chapter(memo.bookroom_id, member_id)
+        if not self.is_chapter_spoiler(memo.chapter, current_chapter):
+            return False
+
+        return True
+
+    async def reveal_memo(self, member_id: int, memo_id: int) -> None:
+        # 1회 열람 시 영구 해제
+        memo = await self.repo.get_memo(memo_id)
+        if memo is None:
+            raise NotFound("MEMO_NOT_FOUND", "요청한 메모를 찾을 수 없습니다.")
+
+        # TODO: 독서방 멤버 권한 검증(MemoService._check_room_member) 연동 필요
+
+        await self.repo.save_memo_reveal(memo_id, member_id)
+        await self.db.commit()
+
+    async def is_cluster_summary_blurred(self, member_id: int, cluster_id: int) -> bool:
+        # AI요약 스포일러 연동
+        cluster = await self.repo.get_cluster(cluster_id)
+        if cluster is None:
+            return True
+
+        current_chapter = await self.repo.get_member_chapter(cluster.bookroom_id, member_id)
+        return self.is_chapter_spoiler(cluster.chapter, current_chapter)

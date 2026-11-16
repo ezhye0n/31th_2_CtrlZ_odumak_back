@@ -1,9 +1,11 @@
 from typing import Literal
 
 from sqlalchemy import select
+from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.domains.memo.models import Memo
+from app.domains.memo.models import Cluster, Memo, MemoReveal
+from app.domains.room.models import BookroomMember
 
 
 class MemoRepository:
@@ -42,3 +44,37 @@ class MemoRepository:
 
     async def delete(self, memo: Memo) -> None:
         await self.db.delete(memo)
+
+
+class SpoilerRepository:
+    """스포일러 방지 및 열람 기록 DB 접근 담당"""
+
+    def __init__(self, db: AsyncSession):
+        self.db = db
+
+    async def get_memo(self, memo_id: int) -> Memo | None:
+        return await self.db.get(Memo, memo_id)
+
+    async def get_cluster(self, cluster_id: int) -> Cluster | None:
+        return await self.db.get(Cluster, cluster_id)
+
+    async def get_member_chapter(self, bookroom_id: int, member_id: int) -> int | None:
+        """독서방 참여자의 현재 진행 챕터 조회 (ERD: bookroom_member.current_chapter)."""
+        stmt = select(BookroomMember.current_chapter).where(
+            BookroomMember.bookroom_id == bookroom_id,
+            BookroomMember.member_id == member_id,
+        )
+        return await self.db.scalar(stmt)
+
+    async def is_memo_revealed(self, memo_id: int, member_id: int) -> bool:
+        """유저-메모 단위의 영구 열람 기록 존재 여부 확인"""
+        stmt = select(MemoReveal.memo_id).where(
+            MemoReveal.memo_id == memo_id,
+            MemoReveal.member_id == member_id,
+        )
+        return (await self.db.scalar(stmt)) is not None
+
+    async def save_memo_reveal(self, memo_id: int, member_id: int) -> None:
+        """열람 기록이 없을 때만 영구 저장 (동시 요청 안전)"""
+        stmt = insert(MemoReveal).values(memo_id=memo_id, member_id=member_id)
+        await self.db.execute(stmt.on_conflict_do_nothing())
