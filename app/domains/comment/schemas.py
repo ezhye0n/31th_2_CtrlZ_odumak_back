@@ -19,9 +19,6 @@ def _validate_content_length_without_spaces(v: str) -> str:
     return v
 
 
-"""2. 한 줄 생각 작성 요청"""
-
-
 class CommentCreate(BaseModel):
     content: CommentContent
 
@@ -29,9 +26,6 @@ class CommentCreate(BaseModel):
     @classmethod
     def check_len(cls, v: str) -> str:
         return _validate_content_length_without_spaces(v)
-
-
-"""3. 한 줄 생각 수정 요청"""
 
 
 class CommentUpdate(BaseModel):
@@ -43,14 +37,8 @@ class CommentUpdate(BaseModel):
         return _validate_content_length_without_spaces(v)
 
 
-"""5. 한 줄 생각 신고 요청"""
-
-
 class CommentReportCreate(BaseModel):
     reason: ReportReason
-
-
-"""1. 한 줄 생각 목록 조회 시 반환하는 댓글"""
 
 
 class CommentItem(BaseModel):

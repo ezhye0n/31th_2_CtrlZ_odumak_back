@@ -44,3 +44,25 @@ async def test_update_rejects_null_content(client):
 async def test_list_rejects_unknown_sort(client):
     res = await client.get("/api/rooms/1/memos?sort=popular", headers=AUTH)
     assert res.status_code == 400
+
+
+async def test_check_reveal_requires_token(client):
+    res = await client.get("/api/memos/1/reveal-check")
+    assert res.status_code == 401
+    assert res.json()["error"]["code"] == "UNAUTHORIZED"
+
+
+async def test_check_reveal_rejects_invalid_memo_id(client):
+    res = await client.get("/api/memos/not-an-int/reveal-check", headers=AUTH)
+    assert res.status_code == 400
+
+
+async def test_reveal_requires_token(client):
+    res = await client.post("/api/memos/1/reveal")
+    assert res.status_code == 401
+    assert res.json()["error"]["code"] == "UNAUTHORIZED"
+
+
+async def test_reveal_rejects_invalid_memo_id(client):
+    res = await client.post("/api/memos/not-an-int/reveal", headers=AUTH)
+    assert res.status_code == 400

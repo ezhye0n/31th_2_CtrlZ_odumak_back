@@ -104,7 +104,7 @@ class SpoilerService:
         if memo is None:
             raise NotFound("MEMO_NOT_FOUND", "요청한 메모를 찾을 수 없습니다.")
 
-        # TODO: 독서방 멤버 권한 검증(MemoService._check_room_member) 연동 필요 (memo.bookroom_id, member_id)
+        # TODO: 독서방 멤버 권한 검증(MemoService._check_room_member) 연동 필요
 
         await self.repo.save_memo_reveal(memo_id, member_id)
         await self.db.commit()
