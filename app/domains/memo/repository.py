@@ -93,6 +93,7 @@ class MemoRepository:
         row = (await self.db.execute(stmt.order_by(distance).limit(1))).first()
         return (row[0], float(row[1])) if row else None
 
+
 class SpoilerRepository:
     """스포일러 방지 및 열람 기록 DB 접근 담당"""
 
