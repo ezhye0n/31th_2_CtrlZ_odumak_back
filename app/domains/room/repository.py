@@ -1,6 +1,7 @@
-from sqlalchemy import column, func, select, table
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.domains.auth.models import Member
 from app.domains.book.models import Booklist
 from app.domains.room.models import Bookroom, BookroomMember
 
@@ -44,10 +45,9 @@ class RoomRepository:
         return await self.db.scalar(stmt) or 0
 
     async def list_members_with_name(self, room_id: int) -> list[tuple[BookroomMember, str | None]]:
-        member_tbl = table("member", column("member_id"), column("name"))
         stmt = (
-            select(BookroomMember, member_tbl.c.name)
-            .outerjoin(member_tbl, BookroomMember.member_id == member_tbl.c.member_id)
+            select(BookroomMember, Member.name)
+            .outerjoin(Member, BookroomMember.member_id == Member.member_id)
             .where(BookroomMember.bookroom_id == room_id)
             .order_by(BookroomMember.joined_at.asc())
         )

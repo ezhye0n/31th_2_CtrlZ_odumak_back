@@ -3,7 +3,7 @@ from typing import Literal
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.common.exceptions import AppException, BadRequest, Forbidden, NotFound
+from app.common.exceptions import BadRequest, Conflict, Forbidden, NotFound
 from app.domains.room.models import Bookroom, BookroomMember
 from app.domains.room.repository import RoomRepository
 from app.domains.room.schemas import (
@@ -37,16 +37,12 @@ class RoomService:
         return room, room_member
 
     async def get_home(self, member_id: int, room_id: int) -> RoomHomeResponse:
+        room, _ = await self._check_room_member(member_id, room_id)
         room_data = await self.repo.get_with_book_title(room_id)
         if room_data is None:
             raise NotFound("ROOM_NOT_FOUND", "요청한 독서방을 찾을 수 없습니다.")
 
-        room, book_title = room_data
-
-        room_member = await self.repo.get_member(room_id, member_id)
-        if room_member is None:
-            raise Forbidden("NOT_ROOM_MEMBER", "해당 독서방의 참여자가 아닙니다.")
-
+        _, book_title = room_data
         role = "owner" if room.owner_id == member_id else "member"
 
         return RoomHomeResponse(
@@ -71,9 +67,14 @@ class RoomService:
     async def complete_member(
         self, member_id: int, room_id: int, action: Literal["stay", "leave"]
     ) -> None:
-        _, room_member = await self._check_room_member(member_id, room_id)
+        room, room_member = await self._check_room_member(member_id, room_id)
 
         if action == "leave":
+            if room.owner_id == member_id:
+                raise Conflict(
+                    "OWNER_MUST_DELEGATE",
+                    "방장은 위임 후 나갈 수 있습니다.",
+                )
             # TODO: 퇴장 시 개인 아카이브 저장 로직 연동 필요 시 추가
             await self.repo.delete_member(room_member)
             await self.db.commit()
@@ -112,8 +113,7 @@ class RoomService:
         if body.max_capacity is not None:
             current_members = await self.repo.count_members(room_id)
             if body.max_capacity < current_members:
-                raise AppException(
-                    409,
+                raise Conflict(
                     "CAPACITY_BELOW_MEMBERS",
                     "변경하려는 정원이 현재 참여 인원 수보다 적습니다.",
                 )
@@ -180,9 +180,7 @@ class RoomService:
         room = await self._check_room_owner(member_id, room_id)
 
         # TODO: 전체 참여자 알림 발송 및 각자 아카이브(Bookrecord) 자동 저장 로직 연동
-        # TODO: 아카이브 유지를 위해
-        # 행 삭제 대신 상태 변경(room.status = "CLOSED")을 쓰는 경우 아래 줄 교체
-        await self.repo.delete_room(room)
+        room.status = "CLOSED"
         await self.db.commit()
 
     async def delegate_owner(
@@ -212,13 +210,7 @@ class RoomService:
         room_id: int,
         status: Literal["reading", "paused", "completed"],
     ) -> MemberStatusUpdateResponse:
-        room = await self.repo.get(room_id)
-        if room is None:
-            raise NotFound("ROOM_NOT_FOUND", "요청한 독서방을 찾을 수 없습니다.")
-
-        room_member = await self.repo.get_member(room_id, member_id)
-        if room_member is None:
-            raise NotFound("ROOM_NOT_FOUND", "요청한 독서방을 찾을 수 없습니다.")
+        _, room_member = await self._check_room_member(member_id, room_id)
 
         room_member.status = status
         await self.db.commit()

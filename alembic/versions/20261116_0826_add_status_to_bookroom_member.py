@@ -1,7 +1,7 @@
 """add status to bookroom_member
 
 Revision ID: 286b798c632a
-Revises: 9840212bf0fc
+Revises: 3b6f81f97c91
 Create Date: 2026-11-16 08:26:59.790549
 """
 
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 from alembic import op
 
 revision: str = "286b798c632a"
-down_revision: str | None = "9840212bf0fc"
+down_revision: str | None = "3b6f81f97c91"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 
