@@ -33,6 +33,17 @@ class BookRequestResult(BaseModel):
     merged: bool  # 기존 pending 요청 병합 : true
 
 
+class ChapterItem(BaseModel):
+    chapter_number: int  # 1부터
+    title: str
+    start_page: int
+
+
+class BookChaptersResponse(BaseModel):
+    has_chapters: bool
+    chapters: list[ChapterItem]
+
+
 class RoomItem(BaseModel):
     room_id: int
     title: str

@@ -1,18 +1,38 @@
+import json
+
+from pydantic import ValidationError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.common.exceptions import BadRequest, Conflict, NotFound
 from app.domains.book.models import Booklist
 from app.domains.book.repository import BookRepository
 from app.domains.book.schemas import (
+    BookChaptersResponse,
     BookRequestCreate,
     BookRequestResult,
     BookResponse,
+    ChapterItem,
     RoomItem,
 )
 
 APPROVED = "approved"
 PENDING = "pending"
 SEARCH_LIMIT = 50
+
+
+def load_chapters(raw: str | None) -> list[ChapterItem]:
+    # booklist.chapters(JSON 문자열) -> 목차 목록, 비어 있거나 형식이 다르면 빈 목록
+    if not raw:
+        return []
+    try:
+        return [ChapterItem.model_validate(item) for item in json.loads(raw)]
+    except (ValueError, TypeError, ValidationError):
+        return []
+
+
+def dump_chapters(chapters: list[ChapterItem]) -> str:
+    # 목차 목록 -> booklist.chapters에 저장할 JSON 문자열
+    return json.dumps([chapter.model_dump() for chapter in chapters], ensure_ascii=False)
 
 
 class BookService:
@@ -84,6 +104,17 @@ class BookService:
         await self.db.commit()
         await self.db.refresh(book)
         return BookRequestResult(request_id=book.book_id, merged=False)
+
+    async def get_chapters(self, book_id: int) -> BookChaptersResponse:
+        # S-10-6 책 목차 조회
+
+        # 404 - 책이 없거나 승인 전
+        book = await self.repo.get(book_id)
+        if book is None or book.status != APPROVED:
+            raise NotFound("BOOK_NOT_FOUND", "요청한 책을 찾을 수 없습니다.")
+
+        chapters = load_chapters(book.chapters)
+        return BookChaptersResponse(has_chapters=bool(chapters), chapters=chapters)
 
     async def list_rooms(self, book_id: int, sort: str, room_filter: str | None) -> list[RoomItem]:
         # S-08-1 책별 독서방 목록 - CLOSED 방 제외

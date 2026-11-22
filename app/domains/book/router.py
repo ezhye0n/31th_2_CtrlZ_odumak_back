@@ -55,3 +55,10 @@ async def list_book_rooms(
     # S-08-1 책별 독서방 목록
     rooms = await service.list_rooms(book_id, sort, room_filter)
     return ok({"rooms": [room.model_dump(mode="json") for room in rooms]})
+
+
+@router.get("/{book_id}/chapters")
+async def get_book_chapters(book_id: int, service: BookService = Depends(get_service)):
+    # S-10-6 책 목차 조회
+    result = await service.get_chapters(book_id)
+    return ok(result.model_dump())

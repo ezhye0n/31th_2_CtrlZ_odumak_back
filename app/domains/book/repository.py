@@ -59,11 +59,14 @@ class BookRepository:
     async def list_rooms(
         self, book_id: int, sort: str, room_filter: str | None
     ) -> list[tuple[Bookroom, int]]:
-        # 책에 열린 독서방 목록 + 방마다 참여 인원(bookroom_member 행 수)
+        # 책에 열린 독서방 목록 + 방마다 참여 인원(active인 bookroom_member 행 수)
         member_count = (
             select(func.count())
             .select_from(BookroomMember)
-            .where(BookroomMember.bookroom_id == Bookroom.bookroom_id)
+            .where(
+                BookroomMember.bookroom_id == Bookroom.bookroom_id,
+                BookroomMember.member_status == "active",
+            )
             .correlate(Bookroom)
             .scalar_subquery()
         )
