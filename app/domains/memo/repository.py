@@ -1,15 +1,11 @@
 from typing import Literal
 
 from sqlalchemy import func, select
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.dialects.postgresql import insert
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.domains.memo.models import Cluster, Memo, MemoReveal
 from app.domains.room.models import Bookroom, BookroomMember
-
-
-
-
 
 
 class MemoRepository:
@@ -96,6 +92,7 @@ class MemoRepository:
             )
         row = (await self.db.execute(stmt.order_by(distance).limit(1))).first()
         return (row[0], float(row[1])) if row else None
+
 
 class SpoilerRepository:
     """스포일러 방지 및 열람 기록 DB 접근 담당"""
