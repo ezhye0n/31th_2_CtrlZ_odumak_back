@@ -47,5 +47,8 @@ class BookroomMember(Base):
     progress_rate: Mapped[float] = mapped_column(  # 진행률(%)
         Float, default=0, server_default="0"
     )
+    status: Mapped[str] = mapped_column(  # 개인 독서 상태 (reading / paused / completed)
+        String(20), default="reading", server_default="reading"
+    )
     joined_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     offer_expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
