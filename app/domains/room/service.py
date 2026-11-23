@@ -349,7 +349,7 @@ class RoomService:
         return await self.get_preview(member_id, room.bookroom_id)
 
     async def get_preview(self, member_id: int, room_id: int) -> RoomPreviewResponse:
-        # S-11-1 방정보 미리보기 - 만료된 우선참여권 정리 후 조회
+        # S-11-2 방정보 미리보기 - 만료된 우선참여권 정리 후 조회
         await self._get_room_or_404(room_id)
         await self._release_expired_offers(room_id)
 
@@ -469,7 +469,7 @@ class RoomService:
         return WaitlistResponse(waiting_position=position)
 
     async def cancel_waitlist(self, member_id: int, room_id: int) -> None:
-        # S-34-1 대기 취소 - 우선참여권 보유자면 다음 대기자에게 넘김
+        # S-34-4 대기 취소 - 우선참여권 보유자면 다음 대기자에게 넘김
         await self._get_room_or_404(room_id)
 
         room_member = await self.repo.get_member(room_id, member_id)

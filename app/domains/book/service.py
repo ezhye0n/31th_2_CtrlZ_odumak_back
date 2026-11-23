@@ -41,7 +41,7 @@ class BookService:
         self.repo = BookRepository(db)
 
     async def get_book(self, book_id: int) -> BookResponse:
-        ##S-07-1 책 정보 조회
+        # S-07-1 책 정보 조회
         book = await self.repo.get(book_id)
         if book is None or book.status != APPROVED:
             raise NotFound("BOOK_NOT_FOUND", "요청한 책을 찾을 수 없습니다.")

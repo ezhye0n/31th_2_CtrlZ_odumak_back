@@ -36,7 +36,7 @@ class BookRequestResult(BaseModel):
 class ChapterItem(BaseModel):
     chapter_number: int  # 1부터
     title: str
-    start_page: int
+    start_page: int | None = None
 
 
 class BookChaptersResponse(BaseModel):

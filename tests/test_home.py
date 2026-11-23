@@ -97,6 +97,16 @@ async def test_active_rooms_chapter_title_is_null_when_missing(chapter, chapters
     assert result.rooms[0].current_chapter_title is None
 
 
+async def test_active_rooms_chapter_title_without_start_page():
+    chapters = json.dumps([{"chapter_number": 1, "title": "1장", "start_page": None}])
+    service = _make_service()
+    service.repo.list_active_rooms.return_value = [_row(chapter=1, chapters=chapters)]
+
+    result = await service.get_active_rooms(member_id=1, limit=None)
+
+    assert result.rooms[0].current_chapter_title == "1장"
+
+
 @pytest.mark.parametrize("name", [None, "", "  "])
 async def test_member_name_falls_back_to_email_prefix(name):
     service = _make_service()

@@ -100,7 +100,7 @@ RoomPassword = Annotated[str, StringConstraints(max_length=20)]
 
 class ChapterCreate(BaseModel):
     title: ChapterTitle
-    start_page: int = Field(ge=1)
+    start_page: int | None = Field(default=None, ge=1)
 
 
 class RoomCreateRequest(BaseModel):

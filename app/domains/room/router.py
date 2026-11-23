@@ -190,7 +190,7 @@ async def get_room_preview(
     member_id: int = Depends(get_current_member_id),
     db: AsyncSession = Depends(get_db),
 ):
-    # S-11-1 방정보 미리보기 - 만료된 우선참여권 정리 후 조회
+    # S-11-2 방정보 미리보기 - 만료된 우선참여권 정리 후 조회
     data = await RoomService(db).get_preview(member_id=member_id, room_id=room_id)
     return ok(data)
 
@@ -251,7 +251,7 @@ async def cancel_waitlist(
     member_id: int = Depends(get_current_member_id),
     db: AsyncSession = Depends(get_db),
 ):
-    # S-34-1 대기 취소 - 우선참여권 보유자면 다음 대기자에게 넘김
+    # S-34-4 대기 취소 - 우선참여권 보유자면 다음 대기자에게 넘김
     await RoomService(db).cancel_waitlist(member_id=member_id, room_id=room_id)
     return ok(None)
 

@@ -196,6 +196,30 @@ async def test_create_room_keeps_existing_chapters():
     assert service.repo.get_book.return_value.chapters == saved
 
 
+async def test_create_room_without_start_page_saves_null():
+    service = _make_service()
+    book = service.repo.get_book.return_value
+    _flush_assigns_room_id(service)
+    chapters = [{"title": "1장"}, {"title": "2장", "start_page": None}]
+
+    result = await service.create_room(
+        member_id=1, body=RoomCreateRequest(**room_body(chapters=chapters))
+    )
+
+    assert [c.start_page for c in result.chapters] == [None, None]
+    assert json.loads(book.chapters) == [
+        {"chapter_number": 1, "title": "1장", "start_page": None},
+        {"chapter_number": 2, "title": "2장", "start_page": None},
+    ]
+
+
+async def test_create_room_rejects_zero_start_page(client):
+    chapters = [{"title": "1장", "start_page": 0}, {"title": "2장"}]
+    res = await client.post("/api/rooms", json=room_body(chapters=chapters), headers=AUTH)
+    assert res.status_code == 400
+    assert res.json()["error"]["code"] == "INVALID_INPUT"
+
+
 # 103. 책 목차 조회 (GET /api/books/{book_id}/chapters)
 async def test_book_chapters_empty_returns_false():
     service = BookService(AsyncMock())
@@ -208,6 +232,28 @@ async def test_book_chapters_empty_returns_false():
 
     assert result.has_chapters is False
     assert result.chapters == []
+
+
+async def test_book_chapters_returns_null_start_page():
+    saved = json.dumps(
+        [
+            {"chapter_number": 1, "title": "1장", "start_page": None},
+            {"chapter_number": 2, "title": "2장"},  # start_page 키가 없어도 null
+        ]
+    )
+    service = BookService(AsyncMock())
+    service.repo = MagicMock()
+    service.repo.get = AsyncMock(
+        return_value=SimpleNamespace(book_id=1, status="approved", chapters=saved)
+    )
+
+    result = await service.get_chapters(1)
+
+    assert result.has_chapters is True
+    assert [c.model_dump() for c in result.chapters] == [
+        {"chapter_number": 1, "title": "1장", "start_page": None},
+        {"chapter_number": 2, "title": "2장", "start_page": None},
+    ]
 
 
 async def test_book_chapters_pending_book_raises_404():
