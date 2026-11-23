@@ -346,10 +346,12 @@ class RoomService:
             raise AppException(
                 410, "INVITE_EXPIRED", "초대 링크가 만료되었어요. 방장에게 새 링크를 요청해주세요."
             )
-        return await self.get_preview(member_id, room.bookroom_id)
+        return await self.get_preview(member_id, room.bookroom_id, include_private=True)
 
-    async def get_preview(self, member_id: int, room_id: int) -> RoomPreviewResponse:
-        # S-11-2 방정보 미리보기 - 만료된 우선참여권 정리 후 조회
+    async def get_preview(
+        self, member_id: int, room_id: int, include_private: bool = False
+    ) -> RoomPreviewResponse:
+        # S-11-2 방정보 미리보기 - 비공개 방 규칙은 참여·대기 중이거나 초대코드로 들어온 사람만
         await self._get_room_or_404(room_id)
         await self._release_expired_offers(room_id)
 
@@ -360,11 +362,13 @@ class RoomService:
 
         member_count = await self.repo.count_active_members(room_id)
         room_member = await self.repo.get_member(room_id, member_id)
+        my_status = room_member.member_status if room_member else None
+        can_see_rule = room.is_public or include_private or my_status in (ACTIVE, WAITING)
         return RoomPreviewResponse(
             room_id=room.bookroom_id,
             title=room.title,
             description=room.description,
-            rule=room.rule,
+            rule=room.rule if can_see_rule else None,
             book_id=book.book_id,
             book_title=book.title,
             book_writer=book.writer,
