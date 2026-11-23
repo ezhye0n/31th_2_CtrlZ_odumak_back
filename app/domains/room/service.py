@@ -108,8 +108,10 @@ class RoomService:
                     "방장은 위임 후 나갈 수 있습니다.",
                 )
             # TODO: 퇴장 시 개인 아카이브 저장 로직 연동 필요 시 추가
-            await self.repo.delete_member(room_member)
+            # 행은 남겨서 다시 참여하면 진행도를 이어서 볼 수 있게 함
+            room_member.member_status = LEFT
             await self.db.commit()
+            await self.offer_next_waiting(room_id)
 
     async def update_member_progress(
         self,
@@ -150,6 +152,8 @@ class RoomService:
                     "변경하려는 정원이 현재 참여 인원 수보다 적습니다.",
                 )
 
+        capacity_increased = body.max_capacity is not None and body.max_capacity > room.max_capacity
+
         if body.title is not None:
             room.title = body.title
         if body.description is not None:
@@ -164,6 +168,10 @@ class RoomService:
             room.rule = body.rule
 
         await self.db.commit()
+
+        # 정원이 늘어 자리가 생겼으면 대기자에게 우선참여권
+        if capacity_increased:
+            await self.offer_next_waiting(room_id)
 
     async def get_room_members(self, member_id: int, room_id: int) -> RoomMembersResponse:
         room, _ = await self._check_room_member(member_id, room_id)
@@ -195,12 +203,15 @@ class RoomService:
             raise BadRequest("CANNOT_KICK_OWNER", "방장 본인은 강퇴할 수 없습니다.")
 
         target_member = await self.repo.get_member(room_id, target_member_id)
-        if target_member is None:
+        if target_member is None or target_member.member_status != ACTIVE:
             raise NotFound("MEMBER_NOT_FOUND", "해당 독서방의 참여자를 찾을 수 없습니다.")
 
         # TODO: 강퇴 알림 발송 로직 연동 시 reason 활용
-        await self.repo.delete_member(target_member)
+        # 행을 남겨서 강퇴자가 다시 참여하지 못하게 함 (KICKED_FROM_ROOM)
+        target_member.member_status = KICKED
+        target_member.offer_expires_at = None
         await self.db.commit()
+        await self.offer_next_waiting(room_id)
 
     async def preview_close_room(
         self, member_id: int, room_id: int, room_name_confirm: str
