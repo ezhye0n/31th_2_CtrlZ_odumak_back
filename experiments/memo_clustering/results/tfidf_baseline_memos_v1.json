@@ -1,0 +1,365 @@
+{
+  "data": "memos_v1.csv",
+  "n_memos": 70,
+  "n_orders": 20,
+  "trivial": {
+    "one_per_chapter": {
+      "ari": 0.554,
+      "nmi": 0.8385
+    },
+    "singletons": {
+      "ari": 0.0,
+      "nmi": 0.8001
+    }
+  },
+  "runs": {
+    "word": {
+      "vocab_size": 2206,
+      "pairwise": {
+        "n_pairs": 290,
+        "pos_ratio": 0.414,
+        "roc_auc": 0.4838,
+        "avg_precision": 0.4096,
+        "best_f1": 0.5854,
+        "best_f1_threshold": 0.0,
+        "mean_sim_pos": 0.0099,
+        "mean_sim_neg": 0.0111
+      },
+      "online_best": {
+        "threshold": 0.0,
+        "ari": 0.554,
+        "ari_std": 0.0,
+        "nmi": 0.8385,
+        "n_pred_clusters": 8.0,
+        "n_gold_clusters": 19,
+        "n_orders": 20
+      },
+      "online_no_window": {
+        "threshold": 0.0,
+        "ari": 0.554,
+        "ari_std": 0.0,
+        "nmi": 0.8385,
+        "n_pred_clusters": 8.0,
+        "n_gold_clusters": 19,
+        "n_orders": 20
+      },
+      "hardest_pairs": {
+        "false_positive_like": [
+          [
+            0.184,
+            "A26-1",
+            "A26-4"
+          ],
+          [
+            0.135,
+            "A21-1",
+            "D21-3"
+          ],
+          [
+            0.1,
+            "A02-2",
+            "A02-3"
+          ],
+          [
+            0.069,
+            "A07-1",
+            "A07-4"
+          ],
+          [
+            0.068,
+            "A20-1",
+            "C20-5"
+          ]
+        ],
+        "false_negative_like": [
+          [
+            0.0,
+            "A02-1",
+            "A02-5"
+          ],
+          [
+            0.0,
+            "A02-1",
+            "B02-1"
+          ],
+          [
+            0.0,
+            "A02-2",
+            "A02-5"
+          ],
+          [
+            0.0,
+            "A02-3",
+            "B02-4"
+          ],
+          [
+            0.0,
+            "A02-3",
+            "B02-5"
+          ]
+        ]
+      }
+    },
+    "word+quote": {
+      "vocab_size": 2284,
+      "pairwise": {
+        "n_pairs": 290,
+        "pos_ratio": 0.414,
+        "roc_auc": 0.4937,
+        "avg_precision": 0.4152,
+        "best_f1": 0.5854,
+        "best_f1_threshold": 0.0,
+        "mean_sim_pos": 0.0105,
+        "mean_sim_neg": 0.0112
+      },
+      "online_best": {
+        "threshold": 0.0,
+        "ari": 0.554,
+        "ari_std": 0.0,
+        "nmi": 0.8385,
+        "n_pred_clusters": 8.0,
+        "n_gold_clusters": 19,
+        "n_orders": 20
+      },
+      "online_no_window": {
+        "threshold": 0.0,
+        "ari": 0.554,
+        "ari_std": 0.0,
+        "nmi": 0.8385,
+        "n_pred_clusters": 8.0,
+        "n_gold_clusters": 19,
+        "n_orders": 20
+      },
+      "hardest_pairs": {
+        "false_positive_like": [
+          [
+            0.184,
+            "A26-1",
+            "A26-4"
+          ],
+          [
+            0.13,
+            "A21-1",
+            "D21-3"
+          ],
+          [
+            0.1,
+            "A02-2",
+            "A02-3"
+          ],
+          [
+            0.069,
+            "A07-1",
+            "A07-4"
+          ],
+          [
+            0.068,
+            "A20-1",
+            "C20-5"
+          ]
+        ],
+        "false_negative_like": [
+          [
+            0.0,
+            "A02-1",
+            "A02-5"
+          ],
+          [
+            0.0,
+            "A02-1",
+            "B02-1"
+          ],
+          [
+            0.0,
+            "A02-2",
+            "A02-5"
+          ],
+          [
+            0.0,
+            "A02-3",
+            "B02-4"
+          ],
+          [
+            0.0,
+            "A02-3",
+            "B02-5"
+          ]
+        ]
+      }
+    },
+    "char_wb": {
+      "vocab_size": 6653,
+      "pairwise": {
+        "n_pairs": 290,
+        "pos_ratio": 0.414,
+        "roc_auc": 0.5464,
+        "avg_precision": 0.4557,
+        "best_f1": 0.5854,
+        "best_f1_threshold": 0.0,
+        "mean_sim_pos": 0.0517,
+        "mean_sim_neg": 0.0474
+      },
+      "online_best": {
+        "threshold": 0.0,
+        "ari": 0.554,
+        "ari_std": 0.0,
+        "nmi": 0.8385,
+        "n_pred_clusters": 8.0,
+        "n_gold_clusters": 19,
+        "n_orders": 20
+      },
+      "online_no_window": {
+        "threshold": 0.0,
+        "ari": 0.554,
+        "ari_std": 0.0,
+        "nmi": 0.8385,
+        "n_pred_clusters": 8.0,
+        "n_gold_clusters": 19,
+        "n_orders": 20
+      },
+      "hardest_pairs": {
+        "false_positive_like": [
+          [
+            0.363,
+            "A26-1",
+            "A26-4"
+          ],
+          [
+            0.223,
+            "A07-1",
+            "A07-4"
+          ],
+          [
+            0.185,
+            "A21-1",
+            "D21-3"
+          ],
+          [
+            0.164,
+            "A21-1",
+            "D21-1"
+          ],
+          [
+            0.156,
+            "A13-1",
+            "A13-4"
+          ]
+        ],
+        "false_negative_like": [
+          [
+            0.0,
+            "D21-1",
+            "D21-4"
+          ],
+          [
+            0.0,
+            "D21-3",
+            "D21-4"
+          ],
+          [
+            0.001,
+            "A14-5",
+            "B14-3"
+          ],
+          [
+            0.001,
+            "C20-1",
+            "C20-3"
+          ],
+          [
+            0.002,
+            "D13-4",
+            "D13-5"
+          ]
+        ]
+      }
+    },
+    "char_wb+quote": {
+      "vocab_size": 6839,
+      "pairwise": {
+        "n_pairs": 290,
+        "pos_ratio": 0.414,
+        "roc_auc": 0.5584,
+        "avg_precision": 0.4612,
+        "best_f1": 0.5854,
+        "best_f1_threshold": 0.0007,
+        "mean_sim_pos": 0.0537,
+        "mean_sim_neg": 0.0482
+      },
+      "online_best": {
+        "threshold": 0.0,
+        "ari": 0.554,
+        "ari_std": 0.0,
+        "nmi": 0.8385,
+        "n_pred_clusters": 8.0,
+        "n_gold_clusters": 19,
+        "n_orders": 20
+      },
+      "online_no_window": {
+        "threshold": 0.0,
+        "ari": 0.554,
+        "ari_std": 0.0,
+        "nmi": 0.8385,
+        "n_pred_clusters": 8.0,
+        "n_gold_clusters": 19,
+        "n_orders": 20
+      },
+      "hardest_pairs": {
+        "false_positive_like": [
+          [
+            0.361,
+            "A26-1",
+            "A26-4"
+          ],
+          [
+            0.222,
+            "A07-1",
+            "A07-4"
+          ],
+          [
+            0.181,
+            "A21-1",
+            "D21-3"
+          ],
+          [
+            0.158,
+            "A21-1",
+            "D21-1"
+          ],
+          [
+            0.156,
+            "A13-1",
+            "A13-4"
+          ]
+        ],
+        "false_negative_like": [
+          [
+            0.001,
+            "A14-5",
+            "B14-3"
+          ],
+          [
+            0.001,
+            "C20-1",
+            "C20-3"
+          ],
+          [
+            0.001,
+            "D21-3",
+            "D21-4"
+          ],
+          [
+            0.003,
+            "D21-1",
+            "D21-4"
+          ],
+          [
+            0.004,
+            "A20-2",
+            "C20-3"
+          ]
+        ]
+      }
+    }
+  }
+}

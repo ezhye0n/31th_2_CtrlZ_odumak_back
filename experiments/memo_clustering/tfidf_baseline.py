@@ -7,7 +7,8 @@
 
 실행 (repo 루트에서, requirements-ml.txt 설치 필요):
     python experiments/memo_clustering/tfidf_baseline.py
-    python experiments/memo_clustering/tfidf_baseline.py --data path/to/memos.csv
+    python experiments/memo_clustering/tfidf_baseline.py --orders 1 \
+        --data experiments/memo_clustering/data/memos_v0.csv
 
 주의: IDF는 평가 코퍼스 전체로 fit한다(transductive). 메모 수가 적어 불가피하며,
 실서비스라면 독서방 단위로 주기적 재학습하거나 큰 코퍼스로 미리 fit해야 한다.
@@ -42,11 +43,12 @@ def build_text(memo, with_quote: bool) -> str:
     return " ".join(text.split())
 
 
-def run(data_path: Path) -> dict:
+def run(data_path: Path, n_orders: int) -> dict:
     memos = load_memos(data_path)
     results = {
-        "data": str(data_path),
+        "data": data_path.name,
         "n_memos": len(memos),
+        "n_orders": n_orders,
         "trivial": trivial_baselines(memos),
         "runs": {},
     }
@@ -55,12 +57,12 @@ def run(data_path: Path) -> dict:
             name = f"{vec_name}{'+quote' if with_quote else ''}"
             # TfidfVectorizer는 기본 norm="l2"라 내적 = 코사인 유사도
             X = make_vec().fit_transform([build_text(m, with_quote) for m in memos]).toarray()
-            best_online, _ = sweep_online(memos, X)
+            best_online, _ = sweep_online(memos, X, n_orders=n_orders)
             results["runs"][name] = {
                 "vocab_size": X.shape[1],
                 "pairwise": pairwise_metrics(memos, X),
                 "online_best": best_online,
-                "online_no_window": sweep_online(memos, X, window=None)[0],
+                "online_no_window": sweep_online(memos, X, window=None, n_orders=n_orders)[0],
                 "hardest_pairs": hardest_pairs(memos, X),
             }
     return results
@@ -79,25 +81,32 @@ def print_table(results: dict) -> None:
         print(
             f"{name:<16}{p['roc_auc']:>7.3f}{p['avg_precision']:>7.3f}{p['best_f1']:>7.3f}"
             f"{p['best_f1_threshold']:>8.3f}{o['ari']:>7.3f}{o['nmi']:>7.3f}"
-            f"{o['threshold']:>7.3f}{o['n_pred_clusters']:>4}/{o['n_gold_clusters']}"
+            f"{o['threshold']:>7.3f}{o['n_pred_clusters']:>6.1f}/{o['n_gold_clusters']}"
         )
     for name, t in results["trivial"].items():
         print(f"(참고) {name:<20}ARI {t['ari']:.3f}  NMI {t['nmi']:.3f}")
     print("\nAUC/AP/F1: 같은 독서방·챕터 메모 쌍의 동일 주제 판별")
-    print("ARI/NMI : 온라인 할당(ClusterMatcher 재현)에서 ARI가 최대인 임계값 기준")
+    print(
+        f"ARI/NMI : 온라인 할당(ClusterMatcher 재현), 무작위 순서 {results['n_orders']}개 평균 "
+        "ARI가 최대인 임계값 기준"
+    )
 
 
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--data", type=Path, default=DEFAULT_DATA)
-    parser.add_argument("--out", type=Path, default=RESULTS_DIR / "tfidf_baseline.json")
+    parser.add_argument(
+        "--orders", type=int, default=20, help="온라인 할당 무작위 순서 수 (1=파일 순서)"
+    )
+    parser.add_argument("--out", type=Path, help="기본: results/tfidf_baseline_<데이터파일명>.json")
     args = parser.parse_args()
 
-    results = run(args.data)
+    out = args.out or RESULTS_DIR / f"tfidf_baseline_{args.data.stem}.json"
+    results = run(args.data, args.orders)
     print_table(results)
-    args.out.parent.mkdir(parents=True, exist_ok=True)
-    args.out.write_text(json.dumps(results, ensure_ascii=False, indent=2), encoding="utf-8")
-    print(f"\n저장: {args.out}")
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(json.dumps(results, ensure_ascii=False, indent=2), encoding="utf-8")
+    print(f"\n저장: {out}")
 
 
 if __name__ == "__main__":

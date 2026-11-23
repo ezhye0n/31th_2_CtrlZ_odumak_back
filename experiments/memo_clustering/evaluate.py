@@ -9,6 +9,8 @@
                 (작성 순서대로 하나씩 들어오며, 같은 그룹·페이지 위치 ±window 안의
                  가장 가까운 메모와 비교해 임계값 이상이면 편입, 아니면 신규 클러스터)
                 → ARI, NMI, 클러스터 수
+                작성 시각이 없는 데이터(v1)는 순서에 따라 결과가 달라지므로
+                무작위 순서 n_orders번의 평균·표준편차를 낸다.
 """
 
 import csv
@@ -25,13 +27,13 @@ from sklearn.metrics import (
 )
 
 DATA_DIR = Path(__file__).parent / "data"
-DEFAULT_DATA = DATA_DIR / "memos_v0.csv"
+DEFAULT_DATA = DATA_DIR / "memos_v1.csv"  # 실제 수집 메모. v0는 합성
 POSITION_WINDOW = 0.1  # clustering.py와 동일
 
 
 @dataclass
 class Memo:
-    memo_id: int
+    memo_id: str
     room: int
     book: str
     chapter: int
@@ -40,6 +42,8 @@ class Memo:
     quote: str
     content: str
     label: str
+    author: str = ""
+    theme: str = ""  # 챕터를 넘는 공통 테마 (v1만)
 
     @property
     def group(self) -> tuple[int, int]:
@@ -59,7 +63,7 @@ def load_memos(path: Path = DEFAULT_DATA) -> list[Memo]:
     with open(path, encoding="utf-8") as f:
         memos = [
             Memo(
-                memo_id=int(r["memo_id"]),
+                memo_id=r["memo_id"],
                 room=int(r["room"]),
                 book=r["book"],
                 chapter=int(r["chapter"]),
@@ -68,10 +72,12 @@ def load_memos(path: Path = DEFAULT_DATA) -> list[Memo]:
                 quote=r["quote"].strip(),
                 content=r["content"].strip(),
                 label=r["label"].strip(),
+                author=r.get("author", ""),
+                theme=r.get("theme", ""),
             )
             for r in csv.DictReader(f)
         ]
-    return sorted(memos, key=lambda m: m.memo_id)  # memo_id 순서 = 작성 순서로 간주
+    return memos  # 파일 행 순서 = 작성 순서로 간주
 
 
 def _group_pairs(memos: list[Memo]):
@@ -129,14 +135,20 @@ def online_assign(
 
 
 def online_metrics(
-    memos: list[Memo], X: np.ndarray, threshold: float, window: float | None = POSITION_WINDOW
+    memos: list[Memo],
+    X: np.ndarray,
+    threshold: float,
+    window: float | None = POSITION_WINDOW,
+    order: list[int] | None = None,
 ) -> dict:
-    pred = online_assign(memos, X, threshold, window)
-    gold = [f"{m.group}:{m.label}" for m in memos]  # 그룹이 다르면 다른 클러스터
+    """order: 메모가 들어오는 순서(memos 인덱스). None이면 파일 순서."""
+    if order is None:
+        order = list(range(len(memos)))
+    pred = online_assign([memos[i] for i in order], X[order], threshold, window)
+    gold = [f"{memos[i].group}:{memos[i].label}" for i in order]  # 그룹이 다르면 다른 클러스터
     return {
-        "threshold": round(threshold, 3),
-        "ari": round(float(adjusted_rand_score(gold, pred)), 4),
-        "nmi": round(float(normalized_mutual_info_score(gold, pred)), 4),
+        "ari": float(adjusted_rand_score(gold, pred)),
+        "nmi": float(normalized_mutual_info_score(gold, pred)),
         "n_pred_clusters": len(set(pred)),
         "n_gold_clusters": len(set(gold)),
     }
@@ -159,11 +171,36 @@ def trivial_baselines(memos: list[Memo]) -> dict:
 
 
 def sweep_online(
-    memos: list[Memo], X: np.ndarray, thresholds=None, window: float | None = POSITION_WINDOW
+    memos: list[Memo],
+    X: np.ndarray,
+    thresholds=None,
+    window: float | None = POSITION_WINDOW,
+    n_orders: int = 1,
+    seed: int = 0,
 ) -> tuple[dict, list[dict]]:
+    """임계값별 온라인 할당 성능. n_orders>1이면 무작위 작성 순서 n_orders개의 평균·표준편차.
+    best는 평균 ARI 최대 임계값."""
     if thresholds is None:
         thresholds = np.round(np.arange(0.0, 0.951, 0.025), 3)
-    rows = [online_metrics(memos, X, float(t), window) for t in thresholds]
+    rng = np.random.default_rng(seed)
+    orders = (
+        [None] if n_orders <= 1 else [list(rng.permutation(len(memos))) for _ in range(n_orders)]
+    )
+    rows = []
+    for t in thresholds:
+        runs = [online_metrics(memos, X, float(t), window, o) for o in orders]
+        ari = np.array([r["ari"] for r in runs])
+        rows.append(
+            {
+                "threshold": round(float(t), 3),
+                "ari": round(float(ari.mean()), 4),
+                "ari_std": round(float(ari.std()), 4),
+                "nmi": round(float(np.mean([r["nmi"] for r in runs])), 4),
+                "n_pred_clusters": round(float(np.mean([r["n_pred_clusters"] for r in runs])), 1),
+                "n_gold_clusters": runs[0]["n_gold_clusters"],
+                "n_orders": len(orders),
+            }
+        )
     best = max(rows, key=lambda r: (r["ari"], r["nmi"]))
     return best, rows
 
