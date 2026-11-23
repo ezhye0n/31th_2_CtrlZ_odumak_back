@@ -43,7 +43,10 @@ class RoomRepository:
         stmt = (
             select(func.count())
             .select_from(BookroomMember)
-            .where(BookroomMember.bookroom_id == room_id)
+            .where(
+                BookroomMember.bookroom_id == room_id,
+                BookroomMember.member_status == "active",
+            )
         )
         return await self.db.scalar(stmt) or 0
 
@@ -51,7 +54,10 @@ class RoomRepository:
         stmt = (
             select(BookroomMember, Member.name)
             .outerjoin(Member, BookroomMember.member_id == Member.member_id)
-            .where(BookroomMember.bookroom_id == room_id)
+            .where(
+                BookroomMember.bookroom_id == room_id,
+                BookroomMember.member_status == "active",
+            )
             .order_by(BookroomMember.joined_at.asc())
         )
         rows = (await self.db.execute(stmt)).all()

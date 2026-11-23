@@ -63,7 +63,7 @@ class RoomService:
             raise NotFound("ROOM_NOT_FOUND", "요청한 독서방을 찾을 수 없습니다.")
 
         room_member = await self.repo.get_member(room_id, member_id)
-        if room_member is None:
+        if room_member is None or room_member.member_status != ACTIVE:
             raise Forbidden("NOT_ROOM_MEMBER", "해당 독서방의 참여자가 아닙니다.")
 
         return room, room_member
@@ -227,7 +227,7 @@ class RoomService:
             )
 
         target_member = await self.repo.get_member(room_id, target_member_id)
-        if target_member is None:
+        if target_member is None or target_member.member_status != ACTIVE:
             raise BadRequest(
                 "INVALID_DELEGATE_TARGET",
                 "해당 독서방의 참여자가 아니거나 본인에게는 위임할 수 없습니다.",
