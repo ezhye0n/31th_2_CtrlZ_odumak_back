@@ -7,6 +7,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.domains.memo.models import Cluster, Memo, MemoReveal
 from app.domains.room.models import Bookroom, BookroomMember
 
+ACTIVE = "active"  # bookroom_member.member_status
+
 
 class MemoRepository:
     """DB 접근만 담당. 비즈니스 규칙은 service에."""
@@ -19,7 +21,13 @@ class MemoRepository:
         return await self.db.get(Bookroom, room_id)
 
     async def get_room_member(self, room_id: int, member_id: int) -> BookroomMember | None:
-        return await self.db.get(BookroomMember, (room_id, member_id))
+        # 대기/퇴장/강퇴 상태는 참여자가 아니므로 active만 조회
+        stmt = select(BookroomMember).where(
+            BookroomMember.bookroom_id == room_id,
+            BookroomMember.member_id == member_id,
+            BookroomMember.member_status == ACTIVE,
+        )
+        return await self.db.scalar(stmt)
 
     # ---- 메모 ----
     async def get(self, memo_id: int) -> Memo | None:

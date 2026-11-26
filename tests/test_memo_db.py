@@ -6,7 +6,7 @@ from uuid import uuid4
 
 import numpy as np
 import pytest
-from sqlalchemy import delete, select
+from sqlalchemy import delete, select, update
 
 from app.core.database import SessionLocal, engine
 from app.core.security import create_access_token
@@ -129,6 +129,29 @@ async def test_not_room_member(client, room):
     assert res.json()["error"]["code"] == "NOT_ROOM_MEMBER"
     res = await client.get(f"/api/rooms/{room['room_id']}/memos", headers=auth(room["outsider"]))
     assert res.status_code == 403
+
+
+@pytest.mark.parametrize("status", ["waiting", "left", "kicked"])
+async def test_non_active_member_cannot_use_memos(client, room, status):
+    # 메모를 남긴 뒤 대기/퇴장/강퇴 상태가 되면 메모 조회와 작성이 막혀야 함
+    assert (await create(client, room, room["reader"])).status_code == 201
+    async with SessionLocal() as db:
+        await db.execute(
+            update(BookroomMember)
+            .where(
+                BookroomMember.bookroom_id == room["room_id"],
+                BookroomMember.member_id == room["reader"],
+            )
+            .values(member_status=status)
+        )
+        await db.commit()
+
+    res = await create(client, room, room["reader"])
+    assert res.status_code == 403
+    assert res.json()["error"]["code"] == "NOT_ROOM_MEMBER"
+    res = await client.get(f"/api/rooms/{room['room_id']}/memos", headers=auth(room["reader"]))
+    assert res.status_code == 403
+    assert res.json()["error"]["code"] == "NOT_ROOM_MEMBER"
 
 
 async def test_spoiler_auto_judged_by_progress(client, room):
