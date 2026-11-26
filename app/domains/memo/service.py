@@ -100,6 +100,16 @@ class SpoilerService:
     def __init__(self, db: AsyncSession):
         self.db = db
         self.repo = SpoilerRepository(db)
+        self.memo_repo = MemoRepository(db)
+
+    async def _get_accessible_memo(self, member_id: int, memo_id: int) -> Memo:
+        # 메모 존재(404) + 메모가 속한 독서방의 active 참여자인지(403) 확인
+        memo = await self.repo.get_memo(memo_id)
+        if memo is None:
+            raise NotFound("MEMO_NOT_FOUND", "요청한 메모를 찾을 수 없습니다.")
+        if await self.memo_repo.get_room_member(memo.bookroom_id, member_id) is None:
+            raise Forbidden("NOT_ROOM_MEMBER", "독서방 참여자만 이용할 수 있습니다.")
+        return memo
 
     def is_chapter_spoiler(self, target_chapter: int, current_chapter: int | None) -> bool:
         # 내 진행 챕터보다 앞선 챕터면 스포일러(True)
@@ -109,9 +119,7 @@ class SpoilerService:
 
     async def check_reveal(self, member_id: int, memo_id: int) -> bool:
         # 블러 처리 및 경고 열람
-        memo = await self.repo.get_memo(memo_id)
-        if memo is None:
-            raise NotFound("MEMO_NOT_FOUND", "요청한 메모를 찾을 수 없습니다.")
+        memo = await self._get_accessible_memo(member_id, memo_id)
 
         # 본인이 작성한 메모는 블러처리 X
         if memo.member_id == member_id:
@@ -129,12 +137,7 @@ class SpoilerService:
 
     async def reveal_memo(self, member_id: int, memo_id: int) -> None:
         # 1회 열람 시 영구 해제
-        memo = await self.repo.get_memo(memo_id)
-        if memo is None:
-            raise NotFound("MEMO_NOT_FOUND", "요청한 메모를 찾을 수 없습니다.")
-
-        # TODO: 독서방 멤버 권한 검증(MemoService._check_room_member) 연동 필요
-
+        await self._get_accessible_memo(member_id, memo_id)
         await self.repo.save_memo_reveal(memo_id, member_id)
         await self.db.commit()
 

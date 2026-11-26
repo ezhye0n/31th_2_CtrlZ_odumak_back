@@ -115,10 +115,11 @@ class SpoilerRepository:
         return await self.db.get(Cluster, cluster_id)
 
     async def get_member_chapter(self, bookroom_id: int, member_id: int) -> int | None:
-        """독서방 참여자의 현재 진행 챕터 조회 (ERD: bookroom_member.current_chapter)."""
+        """독서방 active 참여자의 현재 진행 챕터 조회 (ERD: bookroom_member.current_chapter)."""
         stmt = select(BookroomMember.current_chapter).where(
             BookroomMember.bookroom_id == bookroom_id,
             BookroomMember.member_id == member_id,
+            BookroomMember.member_status == ACTIVE,
         )
         return await self.db.scalar(stmt)
 

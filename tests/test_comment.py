@@ -26,7 +26,11 @@ def _make_service() -> CommentService:
     service.repo.exists_report_by_member = AsyncMock()
     service.repo.delete = AsyncMock()
     service.memo_repo = MagicMock()
-    service.memo_repo.get = AsyncMock()
+    # 기본값: 공개 메모 + 요청자는 그 독서방의 active 참여자
+    service.memo_repo.get = AsyncMock(
+        return_value=SimpleNamespace(memo_id=1, bookroom_id=1, is_hidden=False)
+    )
+    service.memo_repo.get_room_member = AsyncMock(return_value=SimpleNamespace(member_id=1))
     return service
 
 
@@ -64,7 +68,6 @@ def test_create_comment_allows_100_chars_excluding_spaces():
 
 async def test_create_comment_rejects_duplicate_with_409():
     service = _make_service()
-    service.memo_repo.get.return_value = SimpleNamespace(memo_id=1, is_hidden=False)
     service.repo.exists_by_memo_and_member.return_value = True
 
     with pytest.raises(Conflict) as exc_info:
@@ -75,12 +78,50 @@ async def test_create_comment_rejects_duplicate_with_409():
 
 async def test_list_comments_rejects_hidden_memo_with_404():
     service = _make_service()
-    service.memo_repo.get.return_value = SimpleNamespace(memo_id=1, is_hidden=True)
+    service.memo_repo.get.return_value = SimpleNamespace(memo_id=1, bookroom_id=1, is_hidden=True)
 
     with pytest.raises(NotFound) as exc_info:
-        await service.list_by_memo(memo_id=1)
+        await service.list_by_memo(member_id=1, memo_id=1)
 
     assert exc_info.value.code == "MEMO_NOT_FOUND"
+
+
+# 독서방 active 참여자가 아니면(비참여자/대기/퇴장/강퇴) 조회, 작성, 신고 모두 403
+async def test_list_comments_rejects_non_room_member_with_403():
+    service = _make_service()
+    service.memo_repo.get_room_member.return_value = None
+
+    with pytest.raises(Forbidden) as exc_info:
+        await service.list_by_memo(member_id=2, memo_id=1)
+
+    assert exc_info.value.code == "NOT_ROOM_MEMBER"
+
+
+async def test_create_comment_rejects_non_room_member_with_403():
+    service = _make_service()
+    service.memo_repo.get_room_member.return_value = None
+
+    with pytest.raises(Forbidden) as exc_info:
+        await service.create(member_id=2, memo_id=1, body=CommentCreate(content="한 줄 생각"))
+
+    assert exc_info.value.code == "NOT_ROOM_MEMBER"
+    service.repo.add.assert_not_called()
+
+
+async def test_report_comment_rejects_non_room_member_with_403():
+    service = _make_service()
+    service.repo.get.return_value = Comment(
+        comment_id=1, member_id=3, memo_id=1, parent_id=None, comment="타인 댓글", is_deleted=False
+    )
+    service.memo_repo.get_room_member.return_value = None
+
+    with pytest.raises(Forbidden) as exc_info:
+        await service.report(
+            member_id=2, comment_id=1, body=CommentReportCreate(reason="신고 사유")
+        )
+
+    assert exc_info.value.code == "NOT_ROOM_MEMBER"
+    service.repo.add_report.assert_not_called()
 
 
 # 3. 한 줄 생각 수정 (PATCH /api/comments/{comment_id})
