@@ -50,5 +50,8 @@ class BookroomMember(Base):
     status: Mapped[str] = mapped_column(  # 개인 독서 상태 (reading / paused / completed)
         String(20), default="reading", server_default="reading"
     )
+    member_status: Mapped[str] = mapped_column(  # 참여 상태 (active / waiting / left / kicked)
+        String(20), default="active", server_default="active"
+    )
     joined_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     offer_expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
