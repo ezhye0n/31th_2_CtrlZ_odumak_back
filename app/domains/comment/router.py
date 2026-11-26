@@ -26,7 +26,7 @@ async def list_comments(
     service: CommentService = Depends(get_service),
 ):
     """S-23-1 한 줄 생각 조회 (72)"""
-    rows = await service.list_by_memo(memo_id)
+    rows = await service.list_by_memo(member_id, memo_id)
     comments = [
         CommentItem(
             comment_id=comment.comment_id,

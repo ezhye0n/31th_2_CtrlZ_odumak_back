@@ -6,7 +6,7 @@ from uuid import uuid4
 
 import numpy as np
 import pytest
-from sqlalchemy import delete, select
+from sqlalchemy import delete, select, update
 
 from app.core.database import SessionLocal, engine
 from app.core.security import create_access_token
@@ -129,6 +129,63 @@ async def test_not_room_member(client, room):
     assert res.json()["error"]["code"] == "NOT_ROOM_MEMBER"
     res = await client.get(f"/api/rooms/{room['room_id']}/memos", headers=auth(room["outsider"]))
     assert res.status_code == 403
+
+
+@pytest.mark.parametrize("status", ["waiting", "left", "kicked"])
+async def test_non_active_member_cannot_use_memos(client, room, status):
+    # 메모를 남긴 뒤 대기/퇴장/강퇴 상태가 되면 메모 조회와 작성이 막혀야 함
+    assert (await create(client, room, room["reader"])).status_code == 201
+    async with SessionLocal() as db:
+        await db.execute(
+            update(BookroomMember)
+            .where(
+                BookroomMember.bookroom_id == room["room_id"],
+                BookroomMember.member_id == room["reader"],
+            )
+            .values(member_status=status)
+        )
+        await db.commit()
+
+    res = await create(client, room, room["reader"])
+    assert res.status_code == 403
+    assert res.json()["error"]["code"] == "NOT_ROOM_MEMBER"
+    res = await client.get(f"/api/rooms/{room['room_id']}/memos", headers=auth(room["reader"]))
+    assert res.status_code == 403
+    assert res.json()["error"]["code"] == "NOT_ROOM_MEMBER"
+
+
+async def test_comment_and_reveal_require_active_room_member(client, room):
+    # 비참여자와 강퇴된 참여자는 한 줄 생각, 스포일러 확인/해제를 쓸 수 없어야 함
+    memo_id = (await create(client, room, room["reader"])).json()["data"]["memo_id"]
+    calls = [
+        ("GET", f"/api/memos/{memo_id}/comments", None),
+        ("POST", f"/api/memos/{memo_id}/comments", {"content": "한 줄 생각"}),
+        ("GET", f"/api/memos/{memo_id}/reveal-check", None),
+        ("POST", f"/api/memos/{memo_id}/reveal", None),
+    ]
+
+    async def codes(member):
+        out = []
+        for method, url, body in calls:
+            res = await client.request(method, url, json=body, headers=auth(member))
+            out.append((res.status_code, (res.json().get("error") or {}).get("code")))
+        return out
+
+    forbidden = [(403, "NOT_ROOM_MEMBER")] * len(calls)
+    assert await codes(room["outsider"]) == forbidden
+    assert [c for c, _ in await codes(room["reader"])] == [200, 201, 200, 200]
+
+    async with SessionLocal() as db:
+        await db.execute(
+            update(BookroomMember)
+            .where(
+                BookroomMember.bookroom_id == room["room_id"],
+                BookroomMember.member_id == room["reader"],
+            )
+            .values(member_status="kicked")
+        )
+        await db.commit()
+    assert await codes(room["reader"]) == forbidden
 
 
 async def test_spoiler_auto_judged_by_progress(client, room):

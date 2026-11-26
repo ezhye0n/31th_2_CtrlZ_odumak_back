@@ -1,5 +1,11 @@
 """스포일러 방지(68~71) 요청 검증 및 챕터 비교 단위 테스트"""
 
+from types import SimpleNamespace
+from unittest.mock import AsyncMock, MagicMock
+
+import pytest
+
+from app.common.exceptions import Forbidden
 from app.core.security import create_access_token
 from app.domains.memo.service import SpoilerService
 
@@ -30,3 +36,24 @@ async def test_reveal_memo_requires_token(client):
     res = await client.post("/api/memos/1/reveal")
     assert res.status_code == 401
     assert res.json()["error"]["code"] == "UNAUTHORIZED"
+
+
+# 69, 70. 독서방 active 참여자가 아니면(비참여자/대기/퇴장/강퇴) 블러 확인과 열람 해제 모두 403
+async def test_reveal_rejects_non_room_member_with_403():
+    service = SpoilerService(db=AsyncMock())
+    service.repo = MagicMock()
+    service.repo.get_memo = AsyncMock(
+        return_value=SimpleNamespace(memo_id=1, bookroom_id=1, member_id=3, chapter=1)
+    )
+    service.repo.save_memo_reveal = AsyncMock()
+    service.memo_repo = MagicMock()
+    service.memo_repo.get_room_member = AsyncMock(return_value=None)
+
+    with pytest.raises(Forbidden) as exc_info:
+        await service.check_reveal(member_id=2, memo_id=1)
+    assert exc_info.value.code == "NOT_ROOM_MEMBER"
+
+    with pytest.raises(Forbidden) as exc_info:
+        await service.reveal_memo(member_id=2, memo_id=1)
+    assert exc_info.value.code == "NOT_ROOM_MEMBER"
+    service.repo.save_memo_reveal.assert_not_called()
